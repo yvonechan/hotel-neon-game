@@ -54,6 +54,7 @@ async function firstTwo(s,m){
  await act(s,m,{type:'continue'});
 }
 const {state:s,member:m}=make();
+const {state:named}=make();join(named,'Alice');assert.throws(()=>join(named,'ＡＬＩＣＥ'),e=>e.code==='name_taken');checks++;
 for(let i=1;i<7;i++)join(s,'Detective '+i);
 assert.throws(()=>join(s,'Eighth'),e=>e.code==='full');checks++;
 assert.throws(()=>auth(s,'wrong'),e=>e.code==='session');checks++;
@@ -113,6 +114,7 @@ await read(s,m,'review-notice','source-revision');
 await rejects(()=>act(s,m,{type:'finale',answers:{culprit:'mio',route:'rear',deception:'recording',motive:'deflect',evidence:[]}}),'evidence_groups');
 await act(s,m,{type:'finale',answers:{culprit:'mio',route:'rear',deception:'recording',motive:'deflect',evidence:['photo-original','playlist-history','review-notice','source-revision']}});
 ok(s.complete&&s.unlocked.includes('ending'),'Finale supported by four evidence groups');
+const replayedFinale=await act(s,m,{type:'finale',answers:{}});ok(replayedFinale.record?.id==='reveal'&&s.complete,'Repeated synchronized finale submission returns the existing reveal');
 ok(s.members.reduce((sum,p)=>sum+p.cards.length,0)===7&&s.privateDiscoveries.length===7,'All seven observations are discovered progressively across the case');
 const {state:no,member:n}=make('ja');await firstTwo(no,n);ok(n.cards.length===4,'Solo receives each observation as its location is reached');
 await act(no,n,{type:'verify',extension:'204'});await read(no,n,'case-settings','security-response');
@@ -124,6 +126,12 @@ ok(normal.rows.length===0&&attack.rows.length===5&&alt.rows.length===5&&mutate.e
 const forbidden=await queryFixtures("' OR (SELECT 1)=1 -- "), arithmetic=await queryFixtures("' OR 2>1 -- " );
 ok(!forbidden.error&&forbidden.rows.length===5&&arithmetic.rows.length===5,'Real SQL accepts a subquery and alternative predicate');
 await rejects(()=>engineQuery('projector'),'sql_unavailable');
+
+// Simultaneous chapter actions are safe to retry after another screen wins the race.
+const {state:race,member:racer}=make();await act(race,racer,{type:'start'});await act(race,racer,{type:'sql',query:"' OR 1=1 -- "});await read(race,racer,'booking-receipts','dock-log','asset-card');
+const raceAnswers={booking:'EQ-1842',pass:'SP-62',conclusion:'credential_only'};const firstSubmit=await act(race,racer,{type:'submit',puzzle:'sql',answers:raceAnswers});const secondSubmit=await act(race,racer,{type:'submit',puzzle:'sql',answers:raceAnswers});
+ok(firstSubmit.message===secondSubmit.message&&race.solved.length===1,'Duplicate synchronized puzzle submission is idempotent');
+await act(race,racer,{type:'continue',stage:1});const staleContinue=await act(race,racer,{type:'continue',stage:1});ok(race.stage===2&&!!staleContinue.message,'A slower client can retry chapter advance without an error');
 
 // Regression checks for independent review findings.
 const {state:bounded,member:owner}=make();const guest=join(bounded,'Guest');
@@ -141,6 +149,10 @@ for(let i=0;i<155;i++)await act(bounded,owner,{type:'note',text:'bounded'});
 await act(bounded,owner,{type:'share-card',id:card});
 ok(bounded.notes.length===150,'All note writers enforce the same cap');
 await rejects(()=>act(bounded,owner,null),'json');
+
+const {state:transfer,member:transferHost}=make();const leaving=join(transfer,'Leaving');await act(transfer,transferHost,{type:'start'});leaving.cards=[0,1];leaving.notices=[0,1];
+await act(transfer,leaving,{type:'share-card',id:'card-1'});ok(view(transfer,leaving).cards.find(card=>card.id==='card-1').shared,'A shared private observation is marked shared on its owner screen');
+await act(transfer,transferHost,{type:'remove-member',id:leaving.id});ok(transferHost.cards.includes(0)&&transferHost.cards.includes(1)&&!transferHost.notices.includes(0)&&transferHost.notices.includes(1),'Removing a player transfers clues but only announces unshared ones as private');
 
 // Progressive private discoveries look random, but balance across online players.
 const {state:progressive,member:p1}=make();const p2=join(progressive,'Two'),p3=join(progressive,'Three');await act(progressive,p1,{type:'start'});const online=progressive.members.map(x=>x.id);

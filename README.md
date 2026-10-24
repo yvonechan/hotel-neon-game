@@ -1,6 +1,13 @@
-# Hotel NEON — anime mystery prototype v0.12
+# Hotel NEON — anime mystery prototype v0.13
 
 A local multiplayer investigation for 1–7 players. Host is a player; one English/Japanese language per room; no countdown. The story targets about 90 minutes but has not been timed in a blind playtest. Not deployed.
+
+## v0.13 multiplayer reliability
+
+- Player names are unique after Unicode/case normalization, keeping votes and notes attributable.
+- Puzzle submission, chapter advance and finale actions tolerate another screen completing the same action first.
+- Shared private observations are visibly marked and cannot be shared repeatedly. When a player leaves, only their unshared transferred observations trigger a private reveal for the host.
+- Removing a player requires confirmation. Teammate discovery notices now stay visible above story and system overlays.
 
 ## v0.12 progressive private discoveries
 
@@ -42,7 +49,7 @@ No Cloudflare account is needed locally. For public hosting, use your own Cloudf
 
 ### Updating from v0.8
 
-Replace the source, root package files and Wrangler config with v0.12, then run `npm ci` and `npm run dev`. Keep your existing `.wrangler` directory if you want to retain local room progress. The old `sql-challenge` folder and setup script are obsolete and no longer included. Existing `SQL_CHALLENGE_URL`/`SQL_CHALLENGE_TOKEN` entries in `.dev.vars` are ignored by this version and may be removed. Do not copy secrets into this ZIP.
+Replace the source, root package files and Wrangler config with v0.13, then run `npm ci` and `npm run dev`. Keep your existing `.wrangler` directory if you want to retain local room progress. The old `sql-challenge` folder and setup script are obsolete and no longer included. Existing `SQL_CHALLENGE_URL`/`SQL_CHALLENGE_TOKEN` entries in `.dev.vars` are ignored by this version and may be removed. Do not copy secrets into this ZIP.
 
 If the old Docker lab is still running, stop the two Hotel NEON lab containers in Docker Desktop. You do not need those containers for the new game. You can also run the following while the old Compose file is still present:
 

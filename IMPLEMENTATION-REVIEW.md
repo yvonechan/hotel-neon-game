@@ -92,3 +92,8 @@ The former mixed tool dashboard was reorganized into Explore, Casebook, Evidence
 Dialogue choices can publish bounded per-room votes through the existing authenticated action and WebSocket snapshot path. The server accepts only the canonical dialogue/step keys and choice counts, and removes departed member IDs from ballots. Votes remain advisory so slower or disconnected players cannot block story progress. Witness interviews can press wording, compare inspected evidence and surface only the private clue relevant to that statement. These interactions do not alter puzzle gates or canonical evidence.
 
 The five main characters and four supporting hotel characters use separate transparent 4-expression atlases. Portrait selection is deterministic from scene context and response state.
+
+
+## v0.13 multiplayer reliability
+
+Player names are now unique after Unicode/case normalization. Shared private observations expose a shared marker to their owner, and removing a player transfers all cards while queuing only unshared cards as private reveals. Puzzle submission, chapter advance and finale actions are idempotent for common synchronized-screen races. Player removal has a localized browser confirmation, and teammate discovery notices use a dedicated fixed layer above story/system overlays. Six new regression checks bring the automated suite to 293 checks.

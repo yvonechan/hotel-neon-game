@@ -9,6 +9,7 @@ export class GameError extends Error { constructor(public code:string){super(cod
 const requireThat=(ok:unknown,code:string)=>{if(!ok)throw new GameError(code);};
 const unique=(a:string[])=>[...new Set(a)];
 const norm=(s:unknown)=>String(s??'').normalize('NFKC').trim().toUpperCase().replace(/[‐‑–−]/g,'-');
+const nameKey=(s:unknown)=>String(s??'').normalize('NFKC').trim().toLocaleLowerCase('en-US');
 const text=(s:unknown,max=300)=>String(s??'').trim().slice(0,max);
 const token=()=>crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');
 const initial=['welcome','suspects','witnesses','asset-card','dock-log','work-orders','search-help','case-settings','directory','board-help'];
@@ -37,12 +38,13 @@ export function create(code:string,name:string,language:Lang){
 }
 export function auth(s:State,key:string){const m=s.members.find(m=>m.token===key);requireThat(m,'session');return m!;}
 export function join(s:State,name:string){
- requireThat(s.members.length<7,'full');requireThat(text(name,30),'name');
- const m:Member={id:crypto.randomUUID(),name:text(name,30),token:token(),cards:[],notices:[]};s.members.push(m);
+ requireThat(s.members.length<7,'full');const display=text(name,30);requireThat(display,'name');
+ requireThat(!s.members.some(m=>nameKey(m.name)===nameKey(display)),'name_taken');
+ const m:Member={id:crypto.randomUUID(),name:display,token:token(),cards:[],notices:[]};s.members.push(m);
  s.revision++;return m;
 }
 export function view(s:State,m:Member,online:string[]=[]){
- const cardView=(i:number)=>{const card=content.private_cards[i];return{id:card.id,title:card.title[s.language],location:card.location[s.language],text:card.text[s.language]}};
+ const cardView=(i:number)=>{const card=content.private_cards[i];return{id:card.id,title:card.title[s.language],location:card.location[s.language],text:card.text[s.language],shared:s.notes.some(n=>n.id==='card:'+card.id)}};
  const pending=(m.notices||[])[0];const latest=(s.privateDiscoveries||[]).at(-1);const latestMember=latest&&s.members.find(x=>x.id===latest.member);
  return {code:s.code,language:s.language,host:s.host,me:m.id,started:s.started,stage:s.stage,pending:s.pending,revision:s.revision,complete:s.complete,
  members:s.members.map(x=>({id:x.id,name:x.name,online:online.includes(x.id)})),
@@ -134,7 +136,7 @@ export async function act(s:State,m:Member,a:Record<string,unknown>,services:Ser
  }
  case 'remove-member':{
   requireThat(s.host===m.id,'host_lobby');const id=text(a.id,80);requireThat(id!==m.id&&s.members.some(x=>x.id===id),'member');
-  const removed=s.members.find(x=>x.id===id)!;s.members=s.members.filter(x=>x.id!==id);const transferred=removed.cards.filter(i=>!m.cards.includes(i));m.cards=unique([...m.cards,...removed.cards].map(String)).map(Number);m.notices=unique([...(m.notices||[]),...transferred].map(String)).map(Number);for(const discovery of s.privateDiscoveries||[])if(discovery.member===id)discovery.member=m.id;for(const ballot of Object.values(s.dialogueVotes||{}))delete ballot[id];break;
+  const removed=s.members.find(x=>x.id===id)!;s.members=s.members.filter(x=>x.id!==id);const transferred=removed.cards.filter(i=>!m.cards.includes(i));const unread=transferred.filter(i=>!s.notes.some(n=>n.id==='card:'+content.private_cards[i].id));m.cards=unique([...m.cards,...removed.cards].map(String)).map(Number);m.notices=unique([...(m.notices||[]),...unread].map(String)).map(Number);for(const discovery of s.privateDiscoveries||[])if(discovery.member===id)discovery.member=m.id;for(const ballot of Object.values(s.dialogueVotes||{}))delete ballot[id];break;
  }
  case 'note':requireThat(!s.boardLocked,'board_locked');requireThat(text(a.text,600),'empty');s.notes.push({id:crypto.randomUUID(),by:m.name,text:text(a.text,600)});s.notes=s.notes.slice(-150);break;
  case 'share-card':{
@@ -145,7 +147,7 @@ export async function act(s:State,m:Member,a:Record<string,unknown>,services:Ser
   s.dialogueVotes||={};s.dialogueVotes[key]||={};s.dialogueVotes[key][m.id]=choice;break;
  }
  case 'submit':{
-  const id=text(a.puzzle);const p=puzzles[s.stage-1];requireThat(p&&id===p.id&&!s.pending,'stage');
+  const id=text(a.puzzle);const p=puzzles[s.stage-1];if(p&&id===p.id&&s.pending&&s.solved.includes(id)){result.message=p.flag;break;}requireThat(p&&id===p.id&&!s.pending,'stage');
   const v=(a.answers||{}) as Record<string,unknown>;
   if(id==='sql'){
    requireThat(s.sqlRevealed,'run_query');needsRead(s,['booking-receipts','dock-log','asset-card']);
@@ -166,8 +168,9 @@ export async function act(s:State,m:Member,a:Record<string,unknown>,services:Ser
   s.solved.push(p.id);s.pending=true;
   result.message=p.flag;break;
  }
- case 'continue':requireThat(s.pending&&s.stage<=5,'stage');s.pending=false;s.stage++;if(s.stage<=5)unlock(s,chapters[s.stage]);break;
+ case 'continue':{const expected=Number(a.stage);if(!s.pending&&Number.isInteger(expected)&&expected<s.stage){result.message=s.language==='ja'?'チームはすでに次の章へ進みました。':'The team has already moved to the next chapter.';break;}requireThat(s.pending&&s.stage<=5,'stage');s.pending=false;s.stage++;if(s.stage<=5)unlock(s,chapters[s.stage]);break;}
  case 'finale':{
+  if(s.complete){result.record=record(s,'reveal');break;}
   requireThat(s.stage===6&&!s.complete,'stage');
   const v=(a.answers||{}) as Record<string,unknown>;const selected=Array.isArray(v.evidence)?v.evidence as string[]:[];
   requireThat(v.culprit==='mio'&&v.route==='rear'&&v.deception==='recording'&&v.motive==='deflect','deduction');
