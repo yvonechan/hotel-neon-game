@@ -20,6 +20,7 @@ await build({entryPoints:['src/client/phone.tsx'],outfile:'.test/phone.mjs',bund
 const {conversationLines,SupportPhone,PhoneDesk}=await import('../.test/phone.mjs?'+Date.now());
 await build({entryPoints:['src/client/intro.ts'],outfile:'.test/intro.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {hotelTourStops}=await import('../.test/intro.mjs?'+Date.now());
+const mainSource=await readFile('src/client/main.tsx','utf8');
 await build({entryPoints:['src/server/sql-client.ts'],outfile:'.test/sql-client.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {querySqlLab}=await import('../.test/sql-client.mjs');
 // Execute the Cloudflare Worker in an isolated workerd runtime, not a preview server.
@@ -223,6 +224,7 @@ for(const language of ['en','ja']){
 }
 ok(openingBeats.filter(beat=>beat.choice?.length>1).length>=2,'Opening includes multiple conversational choices');
 ok(openingBeats.every(beat=>beat.speaker.length===2&&beat.text.length===2),'Opening is bilingual throughout');
+ok(mainSource.includes('Security themes in this case')&&mainSource.includes('SQL injection · Prompt injection · Path traversal · Social engineering'),'Hint card lists the game’s security themes');
 ok(replayChoice({host:0,guest:1},'guest')===1,'Replay follows the viewing player’s recorded response');
 ok(replayChoice({host:0,guest:0,third:1},'late-player')===0,'Replay falls back to the room’s recorded majority for a player without a vote');
 ok(replayChoice({},'host')===undefined,'Replay does not invent a response when none was recorded');
@@ -301,7 +303,7 @@ for(const language of ['en','ja']){
  const dialogue=openingBeats.map(beat=>beat.text[language==='ja'?1:0]).join(' ');
  ok(dialogue.includes(language==='ja'?'その人の画面にだけ':'chosen player’s screen'),'Intro explicitly explains private discoveries in '+language);
  ok(dialogue.includes(language==='ja'?'進行に沿ってすべて':'discover every observation as they progress'),'Intro explains progressive solo discovery in '+language);
- ok(dialogue.includes(language==='ja'?'サイバーセキュリティを題材にした協力型ミステリー':'cybersecurity mystery game'),'Intro explicitly identifies the cybersecurity game in '+language);
+ ok(dialogue.includes(language==='ja'?'サイバーセキュリティを題材にした協力型ミステリー':'collaborative cybersecurity mystery game'),'Intro identifies the cybersecurity game without listing vulnerability answers in '+language);
 }
 await build({entryPoints:['src/client/image-viewer.tsx'],outfile:'.test/image-viewer.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {EvidenceImageViewer}=await import('../.test/image-viewer.mjs');
