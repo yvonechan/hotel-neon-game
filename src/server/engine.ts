@@ -4,7 +4,8 @@ import {localizeEvidence,type LocalizedPresentation} from '../shared/evidence';
 export type Lang='en'|'ja';
 export type Member={id:string;name:string;token:string;cards:number[];notices?:number[]};
 export type PrivateDiscovery={trigger:string;card:number;member:string;seq:number};
-export type State={code:string;language:Lang;host:string;members:Member[];started:boolean;stage:number;pending:boolean;revision:number;unlocked:string[];read:string[];solved:string[];notes:{id:string;by:string;text:string}[];pins:string[];boardLocked:boolean;tokenShared:boolean;recovered:boolean;verified:boolean;sqlRevealed:boolean;originalOpened:boolean;archiveOpened:boolean;controllerOpened:boolean;hints:Record<string,number>;dialogueVotes:Record<string,Record<string,number>>;privateDiscoveries?:PrivateDiscovery[];complete:boolean};
+export type DialogueDecision={eligible:string[];votes:Record<string,number>;proposed?:number;override?:number;locked?:number};
+export type State={code:string;language:Lang;host:string;members:Member[];started:boolean;stage:number;pending:boolean;revision:number;unlocked:string[];read:string[];solved:string[];notes:{id:string;by:string;text:string}[];pins:string[];boardLocked:boolean;tokenShared:boolean;recovered:boolean;verified:boolean;sqlRevealed:boolean;originalOpened:boolean;archiveOpened:boolean;controllerOpened:boolean;hints:Record<string,number>;dialogueVotes:Record<string,Record<string,number>>;dialogueDecisions?:Record<string,DialogueDecision>;privateDiscoveries?:PrivateDiscovery[];complete:boolean};
 export class GameError extends Error { constructor(public code:string){super(code);} }
 const requireThat=(ok:unknown,code:string)=>{if(!ok)throw new GameError(code);};
 const unique=(a:string[])=>[...new Set(a)];
@@ -33,7 +34,7 @@ export function create(code:string,name:string,language:Lang){
  requireThat(language==='en'||language==='ja','language');
  const member:Member={id:crypto.randomUUID(),name:text(name,30),token:token(),cards:[],notices:[]};
  requireThat(member.name,'name');
- const state:State={code,language,host:member.id,members:[member],started:false,stage:1,pending:false,revision:1,unlocked:[...initial],read:[],solved:[],notes:[],pins:[],boardLocked:false,tokenShared:false,recovered:false,verified:false,sqlRevealed:false,originalOpened:false,archiveOpened:false,controllerOpened:false,hints:{},dialogueVotes:{},privateDiscoveries:[],complete:false};
+ const state:State={code,language,host:member.id,members:[member],started:false,stage:1,pending:false,revision:1,unlocked:[...initial],read:[],solved:[],notes:[],pins:[],boardLocked:false,tokenShared:false,recovered:false,verified:false,sqlRevealed:false,originalOpened:false,archiveOpened:false,controllerOpened:false,hints:{},dialogueVotes:{},dialogueDecisions:{},privateDiscoveries:[],complete:false};
  return {state,member};
 }
 export function auth(s:State,key:string){const m=s.members.find(m=>m.token===key);requireThat(m,'session');return m!;}
@@ -51,7 +52,7 @@ export function view(s:State,m:Member,online:string[]=[]){
  records:s.unlocked.map(id=>{const e=byId.get(id)!;return{id,title:e.title[s.language],tool:e.tool,read:s.read.includes(id),pinned:!s.boardLocked&&s.pins.includes(id)}}),
  cards:m.cards.map(cardView),privateDiscovery:pending===undefined?null:cardView(pending),privateEvent:latest&&latestMember?{seq:latest.seq,member:latest.member,name:latestMember.name,location:content.private_cards[latest.card].location[s.language]}:null,
  board:{locked:s.boardLocked,tokenShared:s.tokenShared,recovered:s.recovered,notes:s.boardLocked?[]:s.notes,pins:s.boardLocked?[]:s.pins},
- verified:s.verified,solved:s.solved,dialogueVotes:s.dialogueVotes||{},
+ verified:s.verified,solved:s.solved,dialogueVotes:s.dialogueVotes||{},dialogueDecisions:s.dialogueDecisions||{},
  receipts:s.solved.map(id=>{const p=puzzles.find(p=>p.id===id)!;return{id,flag:p.flag,title:p.title[s.language],takeaway:p.takeaway[s.language]}}),
  puzzle:s.stage<=5?{id:puzzles[s.stage-1].id,title:puzzles[s.stage-1].title[s.language],task:puzzles[s.stage-1].task[s.language],hints:puzzles[s.stage-1].hints.slice(0,s.hints[puzzles[s.stage-1].id]||0).map(h=>h[s.language])}:null};
 }
@@ -74,6 +75,8 @@ export function resolvePath(input:string){
 }
 export type SqlResult={query:string;rows:(string|null)[][];error:boolean;engine:'sqlite';code?:string};
 export type Services={query?:(input:string)=>Promise<SqlResult>;online?:string[]};
+function decisionFor(s:State,key:string,caller:Member,online:string[]=[]){s.dialogueDecisions||={};if(!s.dialogueDecisions[key]){const legacy={...(s.dialogueVotes?.[key]||{})};const active=s.members.filter(x=>online.includes(x.id)||x.id===caller.id||legacy[x.id]!==undefined).map(x=>x.id);s.dialogueDecisions[key]={eligible:active.length?active:[caller.id],votes:legacy};}return s.dialogueDecisions[key]}
+export function reconcileDialogues(s:State,online:string[]=[]){let changed=false;for(const decision of Object.values(s.dialogueDecisions||{})){if(decision.locked!==undefined)continue;const existing=new Set(s.members.map(x=>x.id));let active=decision.eligible.filter(id=>existing.has(id)&&(online.length===0||online.includes(id)));if(!active.length&&online.length){const replacements=s.members.filter(member=>online.includes(member.id)).map(member=>member.id);if(replacements.length){decision.eligible=unique([...decision.eligible,...replacements]);active=replacements;changed=true}}if(!active.length||active.some(id=>decision.votes[id]===undefined))continue;const counts=new Map<number,number>();for(const id of active){const vote=decision.votes[id];counts.set(vote,(counts.get(vote)||0)+1)}const best=Math.max(...counts.values());const leaders=[...counts].filter(([,count])=>count===best).map(([choice])=>choice);const selected=leaders.length===1?leaders[0]:decision.votes[s.host];if(selected===undefined||!leaders.includes(selected))continue;if(decision.proposed!==selected){decision.proposed=selected;changed=true}if(active.length===1){decision.locked=selected;changed=true}}return changed}
 export async function queryFixtures(input:string,run?:Services['query']){
  requireThat(typeof input==='string'&&input.length<=200,'query_length');
  requireThat(run,'sql_unavailable');return run!(input);
@@ -136,7 +139,7 @@ export async function act(s:State,m:Member,a:Record<string,unknown>,services:Ser
  }
  case 'remove-member':{
   requireThat(s.host===m.id,'host_lobby');const id=text(a.id,80);requireThat(id!==m.id&&s.members.some(x=>x.id===id),'member');
-  const removed=s.members.find(x=>x.id===id)!;s.members=s.members.filter(x=>x.id!==id);const transferred=removed.cards.filter(i=>!m.cards.includes(i));const unread=transferred.filter(i=>!s.notes.some(n=>n.id==='card:'+content.private_cards[i].id));m.cards=unique([...m.cards,...removed.cards].map(String)).map(Number);m.notices=unique([...(m.notices||[]),...unread].map(String)).map(Number);for(const discovery of s.privateDiscoveries||[])if(discovery.member===id)discovery.member=m.id;for(const ballot of Object.values(s.dialogueVotes||{}))delete ballot[id];break;
+  const removed=s.members.find(x=>x.id===id)!;s.members=s.members.filter(x=>x.id!==id);const transferred=removed.cards.filter(i=>!m.cards.includes(i));const unread=transferred.filter(i=>!s.notes.some(n=>n.id==='card:'+content.private_cards[i].id));m.cards=unique([...m.cards,...removed.cards].map(String)).map(Number);m.notices=unique([...(m.notices||[]),...unread].map(String)).map(Number);for(const discovery of s.privateDiscoveries||[])if(discovery.member===id)discovery.member=m.id;for(const ballot of Object.values(s.dialogueVotes||{}))delete ballot[id];for(const decision of Object.values(s.dialogueDecisions||{})){delete decision.votes[id];decision.eligible=decision.eligible.filter(memberId=>memberId!==id)}reconcileDialogues(s,services.online);break;
  }
  case 'note':requireThat(!s.boardLocked,'board_locked');requireThat(text(a.text,600),'empty');s.notes.push({id:crypto.randomUUID(),by:m.name,text:text(a.text,600)});s.notes=s.notes.slice(-150);break;
  case 'share-card':{
@@ -144,7 +147,10 @@ export async function act(s:State,m:Member,a:Record<string,unknown>,services:Ser
  }
  case 'dialogue-vote':{
   const key=text(a.key,80);const choice=Number(a.choice),count=dialogueChoiceCounts[key];requireThat(Number.isInteger(choice)&&count!==undefined&&choice>=0&&choice<count&&dialogueAvailable(s,key),'dialogue_vote');
-  s.dialogueVotes||={};s.dialogueVotes[key]||={};s.dialogueVotes[key][m.id]=choice;break;
+  const decision=decisionFor(s,key,m,services.online);requireThat(decision.locked===undefined&&decision.proposed===undefined,'dialogue_locked');requireThat(decision.eligible.includes(m.id),'dialogue_vote');decision.votes[m.id]=choice;s.dialogueVotes||={};s.dialogueVotes[key]=decision.votes;reconcileDialogues(s,services.online);break;
+ }
+ case 'dialogue-finalize':{
+  const key=text(a.key,80);const choice=Number(a.choice),count=dialogueChoiceCounts[key];requireThat(s.host===m.id,'host_lobby');requireThat(Number.isInteger(choice)&&count!==undefined&&choice>=0&&choice<count&&dialogueAvailable(s,key),'dialogue_vote');const decision=decisionFor(s,key,m,services.online);reconcileDialogues(s,services.online);requireThat(decision.locked===undefined&&decision.proposed!==undefined,'dialogue_vote');if(choice!==decision.proposed)decision.override=choice;decision.locked=choice;break;
  }
  case 'submit':{
   const id=text(a.puzzle);const p=puzzles[s.stage-1];if(p&&id===p.id&&s.pending&&s.solved.includes(id)){result.message=p.flag;break;}requireThat(p&&id===p.id&&!s.pending,'stage');

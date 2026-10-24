@@ -1,6 +1,6 @@
 export {SqlLab} from './sql-lab';
 import { DurableObject } from 'cloudflare:workers';
-import { create,join,auth,view,act,GameError,type State } from './engine';
+import { create,join,auth,view,act,reconcileDialogues,GameError,type State } from './engine';
 import {querySqlLab,type SqlEnv} from './sql-client';
 interface Env extends SqlEnv {ROOMS:DurableObjectNamespace<GameRoom>;ASSETS:Fetcher}
 const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
@@ -52,7 +52,7 @@ export class GameRoom extends DurableObject<Env>{
  async webSocketMessage(ws:WebSocket,message:string|ArrayBuffer){if(message==='ping')ws.send('pong');}
  async webSocketClose(ws:WebSocket,code:number,reason:string){
   try{ws.close([1005,1006,1015].includes(code)?1000:code,reason)}catch{}if(!this.state)return;
-  const active=this.online(ws);await this.locked(async()=>{if(!active.includes(this.state!.host)&&active.length){this.state!.host=active[0];this.state!.revision++;await this.ctx.storage.put('room',this.state);}return json({ok:true})});this.push();
+  const active=this.online(ws);await this.locked(async()=>{let changed=false;if(!active.includes(this.state!.host)&&active.length){this.state!.host=active[0];changed=true}if(reconcileDialogues(this.state!,active))changed=true;if(changed){this.state!.revision++;await this.ctx.storage.put('room',this.state)}return json({ok:true})});this.push();
  }
  async webSocketError(ws:WebSocket){try{ws.close(1011,'Connection interrupted')}catch{}}
 }

@@ -94,6 +94,13 @@ Dialogue choices can publish bounded per-room votes through the existing authent
 The five main characters and four supporting hotel characters use separate transparent 4-expression atlases. Portrait selection is deterministic from scene context and response state.
 
 
+## v0.15 room-wide dialogue decisions
+
+Important dialogue choices now create a fixed eligible voter set from the players online when the ballot starts. The UI shows vote progress and names each outstanding voter. Once the active quorum has voted, the server computes a majority proposal; a tie follows the Host's own vote. Multiplayer decisions wait for an explicit Host confirmation, and a different Host selection is recorded and labelled as an override. The resulting choice locks for the room and is the only path available in replay.
+
+Disconnecting players are removed from the active quorum so they cannot stall a room. Late joiners do not reopen an existing ballot. If every original voter disconnects, current online players may take over the abandoned ballot. Solo rooms lock immediately. Durable Object integration tests exercise two authenticated WebSocket sessions through voting, proposal and Host override, in addition to engine-level quorum, departure, tie and authorization checks.
+
+
 ## v0.13 multiplayer reliability
 
 Player names are now unique after Unicode/case normalization. Shared private observations expose a shared marker to their owner, and removing a player transfers all cards while queuing only unshared cards as private reveals. Puzzle submission, chapter advance and finale actions are idempotent for common synchronized-screen races. Player removal has a localized browser confirmation, and teammate discovery notices use a dedicated fixed layer above story/system overlays. Six new regression checks bring the automated suite to 293 checks.

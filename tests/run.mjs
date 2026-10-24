@@ -5,7 +5,7 @@ import {spawnSync} from 'node:child_process';
 import {Miniflare,convertV4MiniflareOptions,Log,LogLevel} from 'miniflare';
 await mkdir('.test',{recursive:true});
 await build({entryPoints:['src/server/engine.ts'],outfile:'.test/engine.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
-const {create,join,auth,view,act:engineAct,resolvePath,queryFixtures:engineQuery}=await import('../.test/engine.mjs?'+Date.now());
+const {create,join,auth,view,act:engineAct,resolvePath,reconcileDialogues,queryFixtures:engineQuery}=await import('../.test/engine.mjs?'+Date.now());
 await build({entryPoints:['src/client/rpg.tsx'],outfile:'.test/rpg.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {questTasks,QuestGuide,Tutorial,HotelMap,KumaChat,EvidenceBody,PrivateDiscoveryCard}=await import('../.test/rpg.mjs?'+Date.now());
 const {renderToStaticMarkup}=await import('react-dom/server');
@@ -63,11 +63,41 @@ const other=s.members[1];await rejects(()=>act(s,other,{type:'start'}),'host_lob
 await act(s,m,{type:'language',language:'ja'});ok(view(s,other).language==='ja','One room language for all players');
 await act(s,m,{type:'language',language:'en'});
 await act(s,m,{type:'start'});
-await act(s,m,{type:'dialogue-vote',key:'opening:1',choice:1});
-await act(s,other,{type:'dialogue-vote',key:'opening:1',choice:0});
+const openingVoters=[m.id,other.id];
+await actOnline(s,m,{type:'dialogue-vote',key:'opening:1',choice:1},openingVoters);
+ok(s.dialogueDecisions['opening:1'].locked===undefined,'Dialogue waits for every online eligible player');
+await actOnline(s,other,{type:'dialogue-vote',key:'opening:1',choice:0},openingVoters);
 ok(view(s,m).dialogueVotes['opening:1'][m.id]===1&&view(s,other).dialogueVotes['opening:1'][other.id]===0,'Dialogue votes synchronize without exposing session tokens');
+ok(view(s,m,openingVoters).dialogueDecisions['opening:1'].proposed===1&&view(s,m,openingVoters).dialogueDecisions['opening:1'].locked===undefined,'Host vote breaks a tie and waits for confirmation');
+await actOnline(s,m,{type:'dialogue-finalize',key:'opening:1',choice:1},openingVoters);
+ok(view(s,m,openingVoters).dialogueDecisions['opening:1'].locked===1,'Host confirms the tied team response');
+await rejects(()=>actOnline(s,other,{type:'dialogue-vote',key:'opening:1',choice:1},openingVoters),'dialogue_locked');
 await rejects(()=>act(s,m,{type:'dialogue-vote',key:'../bad',choice:9}),'dialogue_vote');
 await rejects(()=>act(s,m,{type:'dialogue-vote',key:'chapter-6:2',choice:0}),'dialogue_vote');
+
+// Room-wide dialogue decisions wait for eligible online voters, then lock once.
+const {state:majority,member:voteHost}=make();const voter2=join(majority,'Voter 2'),voter3=join(majority,'Voter 3');await act(majority,voteHost,{type:'start'});const majorityOnline=majority.members.map(x=>x.id);
+await actOnline(majority,voteHost,{type:'dialogue-vote',key:'opening:1',choice:0},majorityOnline);
+await actOnline(majority,voter2,{type:'dialogue-vote',key:'opening:1',choice:1},majorityOnline);
+ok(majority.dialogueDecisions['opening:1'].locked===undefined&&majority.dialogueDecisions['opening:1'].eligible.includes(voter3.id),'Vote exposes the remaining eligible player without locking early');
+await actOnline(majority,voter3,{type:'dialogue-vote',key:'opening:1',choice:0},majorityOnline);
+ok(majority.dialogueDecisions['opening:1'].proposed===0&&majority.dialogueDecisions['opening:1'].locked===undefined,'A completed vote proposes the majority response');
+await actOnline(majority,voteHost,{type:'dialogue-finalize',key:'opening:1',choice:0},majorityOnline);ok(majority.dialogueDecisions['opening:1'].locked===0,'Host confirmation locks the majority response');
+const {state:soloVote,member:soloVoter}=make();await act(soloVote,soloVoter,{type:'start'});await actOnline(soloVote,soloVoter,{type:'dialogue-vote',key:'opening:1',choice:1},[soloVoter.id]);ok(soloVote.dialogueDecisions['opening:1'].locked===1,'Solo play locks its only vote without an extra confirmation');
+
+const {state:overridden,member:overrideHost}=make();const override2=join(overridden,'Override 2'),override3=join(overridden,'Override 3');await act(overridden,overrideHost,{type:'start'});const overrideOnline=overridden.members.map(x=>x.id);
+await actOnline(overridden,overrideHost,{type:'dialogue-vote',key:'opening:1',choice:0},overrideOnline);
+await actOnline(overridden,override2,{type:'dialogue-vote',key:'opening:1',choice:0},overrideOnline);
+await actOnline(overridden,override3,{type:'dialogue-vote',key:'opening:1',choice:0},overrideOnline);
+ok(overridden.dialogueDecisions['opening:1'].proposed===0&&overridden.dialogueDecisions['opening:1'].locked===undefined,'Host override is unavailable until all eligible voters finish');
+await rejects(()=>actOnline(overridden,override2,{type:'dialogue-finalize',key:'opening:1',choice:1},overrideOnline),'host_lobby');
+await actOnline(overridden,overrideHost,{type:'dialogue-finalize',key:'opening:1',choice:1},overrideOnline);
+ok(overridden.dialogueDecisions['opening:1'].override===1&&overridden.dialogueDecisions['opening:1'].locked===1,'Transparent Host override can replace the proposed majority');
+
+const {state:lateRoom,member:lateHost}=make();const early=join(lateRoom,'Early');await act(lateRoom,lateHost,{type:'start'});const earlyOnline=[lateHost.id,early.id];await actOnline(lateRoom,lateHost,{type:'dialogue-vote',key:'opening:1',choice:0},earlyOnline);const lateMember=join(lateRoom,'Late');await actOnline(lateRoom,early,{type:'dialogue-vote',key:'opening:1',choice:0},[...earlyOnline,lateMember.id]);ok(!lateRoom.dialogueDecisions['opening:1'].eligible.includes(lateMember.id)&&lateRoom.dialogueDecisions['opening:1'].proposed===0,'A late joiner does not reopen an in-progress vote');await actOnline(lateRoom,lateHost,{type:'dialogue-finalize',key:'opening:1',choice:0},[...earlyOnline,lateMember.id]);
+
+const {state:offlineRoom,member:offlineHost}=make();const stays=join(offlineRoom,'Stays'),leaves=join(offlineRoom,'Leaves');await act(offlineRoom,offlineHost,{type:'start'});const allOnline=offlineRoom.members.map(x=>x.id);await actOnline(offlineRoom,offlineHost,{type:'dialogue-vote',key:'opening:1',choice:0},allOnline);await actOnline(offlineRoom,stays,{type:'dialogue-vote',key:'opening:1',choice:0},allOnline);ok(reconcileDialogues(offlineRoom,[offlineHost.id,stays.id])&&offlineRoom.dialogueDecisions['opening:1'].proposed===0,'Disconnecting an outstanding voter releases the online quorum for Host confirmation');
+const {state:takeoverRoom,member:departedHost}=make();const departedPeer=join(takeoverRoom,'Departed peer');await act(takeoverRoom,departedHost,{type:'start'});await actOnline(takeoverRoom,departedHost,{type:'dialogue-vote',key:'opening:1',choice:0},[departedHost.id,departedPeer.id]);const takeover=join(takeoverRoom,'Takeover');ok(reconcileDialogues(takeoverRoom,[takeover.id])&&takeoverRoom.dialogueDecisions['opening:1'].eligible.includes(takeover.id)&&takeoverRoom.dialogueDecisions['opening:1'].locked===undefined,'A current online player can take over when every original voter is offline');
 await act(s,m,{type:'verify',extension:'204'});
 ok(!s.verified&&!s.unlocked.includes('security-response'),'Cannot verify or expose a future request');
 await rejects(()=>act(s,m,{type:'send-code',code:'NEON-4826'}),'unavailable');
@@ -225,6 +255,8 @@ for(const language of ['en','ja']){
 ok(openingBeats.filter(beat=>beat.choice?.length>1).length>=2,'Opening includes multiple conversational choices');
 ok(openingBeats.every(beat=>beat.speaker.length===2&&beat.text.length===2),'Opening is bilingual throughout');
 ok(mainSource.includes('Security themes in this case')&&mainSource.includes('SQL injection · Prompt injection · Path traversal · Social engineering'),'Hint card lists the game’s security themes');
+const narrativeSource=await readFile('src/client/narrative.tsx','utf8');
+ok(narrativeSource.includes('Waiting for: ')&&narrativeSource.includes('Confirm majority')&&narrativeSource.includes('Waiting for Host confirmation'),'Dialogue UI exposes pending voters and the Host confirmation state');
 ok(replayChoice({host:0,guest:1},'guest')===1,'Replay follows the viewing player’s recorded response');
 ok(replayChoice({host:0,guest:0,third:1},'late-player')===0,'Replay falls back to the room’s recorded majority for a player without a vote');
 ok(replayChoice({},'host')===undefined,'Replay does not invent a response when none was recorded');
@@ -339,6 +371,14 @@ ok(!unread.includes('presentation'),'Snapshot does not leak future evidence tabl
  hostSocket.close();await transferred;checks++;
  const denied=await post(`/api/rooms/${code}/action`,{type:'read',id:'reveal'},'bad-key');assert.equal(denied.status,401);checks++;
  const origin=await mf.dispatchFetch(`http://neon.test/api/rooms/${code}/action`,{method:'POST',headers:{Origin:'https://untrusted.test','Content-Type':'application/json'},body:JSON.stringify({type:'note',text:'forged'})});assert.equal(origin.status,403);checks++;
+ // Exercise a complete two-browser vote through the Durable Object boundary.
+ const ballotMade=await (await post('/api/create',{name:'Ballot host',language:'en'})).json();const ballotJoined=await (await post(`/api/rooms/${ballotMade.snapshot.code}/join`,{name:'Ballot guest'})).json();
+ const ballotHostResponse=await mf.dispatchFetch(`http://neon.test/api/rooms/${ballotMade.snapshot.code}/ws`,{headers:{Upgrade:'websocket','Sec-WebSocket-Protocol':'neon, '+ballotMade.token}});const ballotHostSocket=ballotHostResponse.webSocket;ballotHostSocket.accept();
+ const ballotGuestResponse=await mf.dispatchFetch(`http://neon.test/api/rooms/${ballotMade.snapshot.code}/ws`,{headers:{Upgrade:'websocket','Sec-WebSocket-Protocol':'neon, '+ballotJoined.token}});const ballotGuestSocket=ballotGuestResponse.webSocket;ballotGuestSocket.accept();
+ await post(`/api/rooms/${ballotMade.snapshot.code}/action`,{type:'start'},ballotMade.token);
+ let ballotResponse=await post(`/api/rooms/${ballotMade.snapshot.code}/action`,{type:'dialogue-vote',key:'opening:1',choice:0},ballotMade.token);let ballotState=await ballotResponse.json();ok(ballotState.snapshot.dialogueDecisions['opening:1'].eligible.length===2&&ballotState.snapshot.dialogueDecisions['opening:1'].locked===undefined,'Durable Object vote waits for both connected browsers');
+ ballotResponse=await post(`/api/rooms/${ballotMade.snapshot.code}/action`,{type:'dialogue-vote',key:'opening:1',choice:1},ballotJoined.token);ballotState=await ballotResponse.json();ok(ballotState.snapshot.dialogueDecisions['opening:1'].proposed===0&&ballotState.snapshot.dialogueDecisions['opening:1'].locked===undefined,'Durable Object exposes the tied Host proposal before confirmation');
+ ballotResponse=await post(`/api/rooms/${ballotMade.snapshot.code}/action`,{type:'dialogue-finalize',key:'opening:1',choice:1},ballotMade.token);ballotState=await ballotResponse.json();ok(ballotState.snapshot.dialogueDecisions['opening:1'].override===1&&ballotState.snapshot.dialogueDecisions['opening:1'].locked===1,'Durable Object broadcasts a Host override as the locked room response');ballotHostSocket.close();ballotGuestSocket.close();
  // A host absent before any other connection must not strand the lobby.
  const alone=await (await post('/api/create',{name:'Absent host',language:'en'})).json();
  const replacement=await (await post(`/api/rooms/${alone.snapshot.code}/join`,{name:'New host'})).json();
@@ -354,5 +394,5 @@ ok(!unread.includes('presentation'),'Snapshot does not leak future evidence tabl
  const unicode=await post(`/api/rooms/${code}/action`,{type:'note',text:'猫'.repeat(3000)},key);assert.equal(unicode.status,400);checks++;
  ws.close();
 }finally{await mf.dispose();}
-const report={checks_passed:checks,date:new Date().toISOString(),scope:'Engine, progressive private-discovery privacy and balancing, synchronized dialogue votes, interactive witness/static-render and expression mapping, localized quest guidance, isolated Cloudflare workerd/SQLite Durable Object and WebSocket synchronization; including real separate challenge SQLite and containment checks; not a browser or blind playtest',limits:['Desktop isolated UI fixture tested; full production Worker/browser end-to-end not tested','Not deployed to a Cloudflare account','No measured play duration','Mobile browser QA remains unverified']};
+const report={checks_passed:checks,date:new Date().toISOString(),scope:'Engine, progressive private-discovery privacy and balancing, room-wide majority dialogue decisions with pending-player display and Host override, interactive witness/static-render and expression mapping, localized quest guidance, isolated Cloudflare workerd/SQLite Durable Object and WebSocket synchronization; including real separate challenge SQLite and containment checks; not a browser or blind playtest',limits:['Desktop isolated UI fixture tested; full production Worker/browser end-to-end not tested','Not deployed to a Cloudflare account','No measured play duration','Mobile browser QA remains unverified']};
 await writeFile('test-report.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
