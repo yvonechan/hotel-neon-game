@@ -1,0 +1,94 @@
+# Prototype implementation review
+
+The story v2 was previously reviewed independently for narrative, security, gameplay and bilingual equivalence. This prototype also received bounded read-only reviews from the security and gameplay reviewers. They did not run a browser or a human playtest.
+
+Concrete issues found and corrected:
+
+- Missing settings/help/correspondence categories made mandatory case documents unreachable in the initial UI. They are now part of the case file.
+- Ordinary public SQL result rows incorrectly navigated to an unavailable internal receipt. They now render their own returned receipt; the relevant revealed booking opens its case evidence.
+- Reception return deleted the sole resume credential. It now retains the token and supplies a Resume action.
+- Future support verification could reveal and close a request before it arrived. Verification now checks for an existing request; earlier enquiries are informational only. Code sending and badge requests also require that thread.
+- Original-image access lacked context. It now requires the image details and retained asset ID.
+- Board pin badges leaked while the board was locked. They are now masked alongside board pins/notes.
+- Superseded in v0.2: the SQL engine was removed entirely. A fixed teaching model evaluates a narrow literal-comparison subset against fictional rows, with no SQL execution.
+- Finding submissions previously advanced the whole room immediately. They now show a shared receipt and explicit Continue before progression.
+- Validation errors thrown across Durable Object concurrency boundaries caused incorrect runtime failure handling. Errors are now caught within that boundary.
+- WebSocket close handling now normalizes reserved close codes and excludes the closing socket when transferring host authority.
+
+Both reviewers rechecked their reported corrections in the actual source and reported no remaining blocker among that bounded set. This does not certify production security, every possible UI path, browser accessibility, observed fun or duration.
+
+`test-report.json` records runtime checks executed by the implementer, including actual isolated Cloudflare workerd requests, durable SQLite storage and WebSocket synchronization/hibernation/host transfer.
+
+## v0.2 independent-review fixes
+- Card sharing is idempotent while its note is retained; all note writes cap the board at150 entries.
+- Host can remove seats in lobby or during the game, revoking tokens and moving optional observations to the host.
+- WebSocket connection rechecks host presence, including when the previous host left before others connected.
+- Request JSON is streamed with an8192-byte limit before decoding; roots must be non-null objects.
+- SQL engine/dependency removed; only fixed fictional row filtering and literal comparisons remain.
+-55 engine/runtime regression checks passed; no live deployment, load test, or browser QA.
+
+Independent agent re-reviewed v0.2 and reran all55 checks: no blocking findings in the scoped fixes. One low UX finding (removed seats endlessly reconnecting) was addressed by clearing invalid sessions on WebSocket1008 or snapshot401. Browser QA and public abuse controls remain outside this validation.
+
+## v0.3 interface revision
+- Added localized quest planner matching server evidence gates, direct investigation links, persistent deduction/advance controls and replayable per-player tutorial.
+- Added graphical map, clue cards, PIP/KUMA vector characters, cast portraits and evidence timelines. Long evidence is opened on demand; original text is retained.
+- KUMA uses fixed in-game actions and scripted replies; no external LLM or input execution was added. Chat remains mounted while hidden, preserving conversation. Opening focuses input; closing restores focus.
+- Independent read-only review found no blocking navigation/server-gate mismatch. Its two low chat findings (conversation reset and keyboard focus) were addressed.
+- Static render/localization tests supplement existing game/workerd tests. Browser QA remains unverified because the managed preview could not start Wrangler; no live deployment was attempted.
+
+## v0.4 visual-novel revision
+- Replaced permanent dashboard navigation/party panels with a hotel scene, hotspots and on-demand location/party menus. Removed duplicate KUMA location; KUMA documents are accessible from Notebook and chat source links.
+- Tutorial now leads to a locally replayable prologue; opening choices do not alter essential evidence. Witness/cast conversations use source text directly. Final explanation opens in a dedicated replayable scene.
+- Added shared Evidence pouch shortcuts, immediate pin destination feedback and direct testimony pinning. Board-lock masking/recovery remains server-enforced.
+- Replaced visible legacy flags with chapter mementos and takeaways; no flags need to be copied or reused.
+- Independent review found two medium navigation issues: hidden finale explanation and dialogue obstructing selected pouch items. Both were fixed via explicit ending scenes and clearing the conversation on inventory navigation, including recovery navigation.
+- Added bilingual static scene renders, original testimony parsing, no-duplicate-KUMA checks, reward rendering and shared-pin engine regression coverage. No browser, load or deployment verification is claimed.
+
+## v0.5 complete story conversations
+- Added bilingual chapter intros1–6 and aftermath conversations1–5, a per-player checkpoint director, source-based narrative record conversations and a multi-speaker final explanation/epilogue.
+- Existing evidence remains authoritative; final reveal/ending bodies are retrieved through authenticated, unlocked server reads. Technical puzzle handlers and server completion gates are unchanged.
+- Independent review identified a cancelled-load lifecycle stall, skipped conversations during multiplayer advancement, and KUMA overlap. Fixed with request-ownership tokens, ordered unseen checkpoint scheduling, and chat wait guards. Reviewer rechecked those fixes and found no new blocker.
+-155 checks passed. No browser or live-deployment verification claimed.
+
+## v0.6 user-reported interaction issues
+- Fixed hotspot :active transform displacement and decorative-layer hit interception; six map handlers verified through actual browser clicks in an isolated fixture.
+- Added environment and per-speaker atlas selection; all nine portrait cells and prologue/chapter/finale environment mappings have automated checks.
+- Restored concierge source taxonomy as a separate KUMA archive and reference search; server document permissions are unchanged.
+- Added SupportPhone end-of-conversation actions, inline fictional-code confirmation and evidence pinning. Reused badge/send-code/pin server actions; no external messaging integration or user SQL execution added.
+- Added PhoneDesk keypad and transcript with the existing verify action, call state, hangup and failed-redial reset. Story waits for active calls or hint overlays.
+- Added directly accessible hints in header/menu/scenes/phone.
+- Reviewer found no blocking security/gate regression; low missing-phone-pin finding was fixed and rechecked. End-of-thread keyboard focus is restored to response actions.
+-181 automated checks pass. Targeted desktop fixture browser checks completed; full production Worker/browser multiplayer and mobile testing remain unverified. The full-client fixture reached tutorial only and is not counted as an end-to-end pass.
+
+## v0.7 holiday prologue pacing
+- Added arrival, reception, three interactive tour stops and holiday planning before the team discovers the PIP presentation. Added four establishing visuals.
+- Tour visits are local, deduplicated and manually advanced. They do not modify server evidence or puzzle gates. Return/Back/Escape and journal replay remain available.
+- Preserved18:35/18:55/19:00/19:02 incident timeline. The preliminary greeting is stationary and does not claim an unsafe autonomous demonstration occurred. Updated chapter1 seal description to past tense after the door is opened.
+- Independent review found no blocking flow/story issue. Its small holiday-priority wording suggestion was incorporated.
+-190 automated checks passed. New intro atlas inspected; no claim of new-intro browser or mobile playtesting.
+
+## v0.8 current review and validation
+
+Supersedes the older SQL simulation notes above: production SQL now uses an isolated native PostgreSQL service and authenticated Node gateway. Worker room data remains in its Durable Object database. Independent source review found no path from the challenge to that app database and no new image-flow blocker. The result projection now clips before driver buffering; intermediate SQL resource use remains a documented lab availability risk. Containers restart after crashes; fresh fixtures are ephemeral. Native Docker validation is pending, not inferred from PGlite.
+
+Evidence enlargement uses a client-only viewer; posted crop preserves the puzzle boundary. Original export still requires an authorized Image details read. Added keyboard panning following review. Transparent portraits occupy a separate layout row. Eighteen structured evidence formats retain original text and ambiguity. Intro/help/private-clue panel explicitly explain differing private cards, sharing, solo distribution and shared discoveries in both languages. Full current-version browser/mobile validation remains pending.
+
+## v0.9 SQLite migration — current implementation
+
+This section supersedes earlier PostgreSQL/Docker and fixed SQL simulation notes. The current application invokes a separate SqlLab Durable Object through its binding. The challenge has its own SQLite database, five fictional records and private quota/schema markers; it never stores room state or player tokens. No public Worker route forwards directly to SqlLab. GameRoom authorizes the player first.
+
+The full generated SELECT is tokenized and parsed to EOF with explicit table/column/function/grammar bounds; only the canonical accepted token stream is executed. No arbitrary SQLite support is claimed. Four SELECTs, 120 tokens, expression depth10, fixed five-row source and no joins/CTEs/expanding functions bound query work. Outer row/text limits and output byte checks apply. Per-room budgets are serialized, persisted before query execution, and survive eviction. Schema version initialization is atomic and skips fixture writes after reconstruction.
+
+Independent source review found no SQL escape or cross-database access blocker; its schema-initialization cost suggestion was incorporated. Actual workerd tests cover accepted/rejected SQL and the game-to-lab path. Cloudflare free-tier compatibility is an architectural target, not measured deployment usage.
+
+
+## v0.10 information architecture
+
+The former mixed tool dashboard was reorganized into Explore, Casebook, Evidence and Team. Hotel systems remain isolated simulations but now open from chapter-specific scene hotspots. Story, people, inspected records and timeline live in the Casebook; pinned evidence and shared notes share one Evidence board. No server state, puzzle answer or Durable Object storage format changed.
+
+
+## v0.11 interactive dialogue
+
+Dialogue choices can publish bounded per-room votes through the existing authenticated action and WebSocket snapshot path. The server accepts only the canonical dialogue/step keys and choice counts, and removes departed member IDs from ballots. Votes remain advisory so slower or disconnected players cannot block story progress. Witness interviews can press wording, compare inspected evidence and surface only the private clue relevant to that statement. These interactions do not alter puzzle gates or canonical evidence.
+
+The five main characters and four supporting hotel characters use separate transparent 4-expression atlases. Portrait selection is deterministic from scene context and response state.

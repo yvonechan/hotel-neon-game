@@ -1,0 +1,9 @@
+{
+  "checks": 64,
+  "engine": "SQLite in actual local Cloudflare workerd Durable Objects",
+  "limits": [
+    "Not deployed to a Cloudflare account",
+    "Restricted SELECT grammar; not arbitrary SQLite SQL",
+    "No full production-browser or public load test"
+  ]
+}
