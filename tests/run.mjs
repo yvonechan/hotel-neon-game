@@ -11,7 +11,7 @@ const {questTasks,QuestGuide,Tutorial,HotelMap,KumaChat,EvidenceBody,PrivateDisc
 const {renderToStaticMarkup}=await import('react-dom/server');
 const React=await import('react');
 await build({entryPoints:['src/client/narrative.tsx'],outfile:'.test/narrative.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
-const {ScenePlayer,WorldScene,openingBeats,parseTestimony,dialogueEmotion}=await import('../.test/narrative.mjs?'+Date.now());
+const {ScenePlayer,WorldScene,openingBeats,parseTestimony,dialogueEmotion,replayChoice}=await import('../.test/narrative.mjs?'+Date.now());
 await build({entryPoints:['src/client/story.ts'],outfile:'.test/story.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {nextStory,chapterScripts,clearScripts,explanationBeats,epilogueBeats,dialogueRecordKind}=await import('../.test/story.mjs?'+Date.now());
 await build({entryPoints:['src/client/visuals.tsx'],outfile:'.test/visuals.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
@@ -223,6 +223,9 @@ for(const language of ['en','ja']){
 }
 ok(openingBeats.filter(beat=>beat.choice?.length>1).length>=2,'Opening includes multiple conversational choices');
 ok(openingBeats.every(beat=>beat.speaker.length===2&&beat.text.length===2),'Opening is bilingual throughout');
+ok(replayChoice({host:0,guest:1},'guest')===1,'Replay follows the viewing player’s recorded response');
+ok(replayChoice({host:0,guest:0,third:1},'late-player')===0,'Replay falls back to the room’s recorded majority for a player without a vote');
+ok(replayChoice({},'host')===undefined,'Replay does not invent a response when none was recorded');
 
 // Story checkpoints must catch up across multiplayer advancement and remain gated.
 const seen=new Set();const finished={started:true,stage:6,complete:true,solved:['sql','prompt','social','metadata','path']};const order=[];
@@ -298,6 +301,7 @@ for(const language of ['en','ja']){
  const dialogue=openingBeats.map(beat=>beat.text[language==='ja'?1:0]).join(' ');
  ok(dialogue.includes(language==='ja'?'その人の画面にだけ':'chosen player’s screen'),'Intro explicitly explains private discoveries in '+language);
  ok(dialogue.includes(language==='ja'?'進行に沿ってすべて':'discover every observation as they progress'),'Intro explains progressive solo discovery in '+language);
+ ok(dialogue.includes(language==='ja'?'サイバーセキュリティを題材にした協力型ミステリー':'cybersecurity mystery game'),'Intro explicitly identifies the cybersecurity game in '+language);
 }
 await build({entryPoints:['src/client/image-viewer.tsx'],outfile:'.test/image-viewer.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {EvidenceImageViewer}=await import('../.test/image-viewer.mjs');
