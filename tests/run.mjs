@@ -21,6 +21,10 @@ const {conversationLines,SupportPhone,PhoneDesk}=await import('../.test/phone.mj
 await build({entryPoints:['src/client/intro.ts'],outfile:'.test/intro.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {hotelTourStops}=await import('../.test/intro.mjs?'+Date.now());
 const mainSource=await readFile('src/client/main.tsx','utf8');
+const workerSource=await readFile('src/server/worker.ts','utf8');
+const sqlLabSource=await readFile('src/server/sql-lab.ts','utf8');
+await build({entryPoints:['src/server/retention.ts'],outfile:'.test/retention.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
+const {ABANDONED_ROOM_TTL_MS,COMPLETED_ROOM_TTL_MS,roomExpiryAt}=await import('../.test/retention.mjs?'+Date.now());
 await build({entryPoints:['src/server/sql-client.ts'],outfile:'.test/sql-client.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {querySqlLab}=await import('../.test/sql-client.mjs');
 // Execute the Cloudflare Worker in an isolated workerd runtime, not a preview server.
@@ -39,6 +43,10 @@ let checks=0;
 try{
 const ok=(value,message)=>{assert.ok(value,message);checks++};
 const rejects=async(fn,code)=>{await assert.rejects(fn,e=>e.code===code);checks++};
+const retentionNow=Date.UTC(2026,9,24);ok(roomExpiryAt({complete:false,lastActiveAt:retentionNow},retentionNow)===retentionNow+ABANDONED_ROOM_TTL_MS&&ABANDONED_ROOM_TTL_MS===7*24*60*60*1000,'Abandoned rooms expire seven days after their last activity');
+ok(roomExpiryAt({complete:true,lastActiveAt:retentionNow},retentionNow)===retentionNow+COMPLETED_ROOM_TTL_MS&&COMPLETED_ROOM_TTL_MS===24*60*60*1000,'Completed rooms expire one day after their last activity');
+ok(workerSource.includes('async alarm()')&&workerSource.includes('storage.deleteAll()')&&sqlLabSource.includes("storage.delete('budget')"),'Room expiry removes game state and the room-specific SQL budget');
+ok(workerSource.includes("chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'")&&workerSource.includes('for(let i=0;i<4;i++)'),'Room codes use six unambiguous random characters and retry storage collisions');
 const {checkSqlite}=await import('./sqlite.mjs');const sqlReport=await checkSqlite(mf,labNamespace);checks+=sqlReport.checks;await writeFile('sqlite-test-report.json',JSON.stringify(sqlReport,null,2)+'\n');
 function make(lang='en'){return create('ABC234','Host',lang)}
 async function read(s,m,...ids){for(const id of ids)await act(s,m,{type:'read',id})}
@@ -111,11 +119,13 @@ const publicView=JSON.stringify(view(s,other));ok(!publicView.includes(m.token),
 ok(!publicView.includes('reveal"'),'Final solution not listed before completion');
 await rejects(()=>act(s,m,{type:'read',id:'reveal'}),'unavailable');
 await act(s,m,{type:'read',id:'witnesses'});await act(s,m,{type:'pin',id:'witnesses'});ok(view(s,other).board.pins.includes('witnesses'),'Pinned testimony is available to the other player');
+await act(s,other,{type:'pin',id:'witnesses'});ok(s.pins.filter(id=>id==='witnesses').length===1,'Repeated pinning from another player is idempotent');
 await act(s,m,{type:'note',text:'Retain this before penalty.'});
 await act(s,m,{type:'send-code',code:'NEON-4826'});
 ok(s.boardLocked&&s.tokenShared,'Sharing locks the shared board');
 ok(view(s,other).board.locked&&view(s,other).board.notes.length===0,'Locked board does not expose notes');
 await rejects(()=>act(s,m,{type:'note',text:'Locked'}),'board_locked');
+await rejects(()=>act(s,m,{type:'pin',id:'witnesses'}),'board_locked');
 await rejects(()=>act(s,m,{type:'recover',choices:['unnecessary_authority','discourages_independent_check']}),'verify_first');
 ok(view(s,other).records.every(r=>!r.pinned),'Locked snapshots hide all pin badges');
 await read(s,other,'directory','case-settings');
@@ -177,6 +187,7 @@ const card=view(bounded,owner).cards[0].id;
 for(let i=0;i<155;i++)await act(bounded,owner,{type:'share-card',id:card});
 ok(bounded.notes.length===1,'Sharing a card is idempotent');
 for(let i=0;i<155;i++)await act(bounded,owner,{type:'note',text:'bounded'});
+ok(view(bounded,owner).cards.find(item=>item.id===card).shared,'A shared observation stays shared after older board notes are trimmed');
 await act(bounded,owner,{type:'share-card',id:card});
 ok(bounded.notes.length===150,'All note writers enforce the same cap');
 await rejects(()=>act(bounded,owner,null),'json');
@@ -257,6 +268,8 @@ ok(openingBeats.every(beat=>beat.speaker.length===2&&beat.text.length===2),'Open
 ok(mainSource.includes('Security themes in this case')&&mainSource.includes('SQL injection · Prompt injection · Path traversal · Social engineering'),'Hint card lists the game’s security themes');
 const narrativeSource=await readFile('src/client/narrative.tsx','utf8');
 ok(narrativeSource.includes('Waiting for: ')&&narrativeSource.includes('Confirm majority')&&narrativeSource.includes('Waiting for Host confirmation'),'Dialogue UI exposes pending voters and the Host confirmation state');
+ok(narrativeSource.includes('When you say you saw PIP at 18:55')&&narrativeSource.includes('interview-exchange')&&narrativeSource.includes('Does “${r.title}” support what you just said?'),'Witness pressing and evidence presentation render an explicit player question and witness reply');
+ok(mainSource.includes("if(shared)await action('ack-private'")&&mainSource.includes("t('Pinned ✓','ピン留め済み ✓')"),'Evidence UI acknowledges existing pins and only dismisses a discovery after a successful share');
 ok(replayChoice({host:0,guest:1},'guest')===1,'Replay follows the viewing player’s recorded response');
 ok(replayChoice({host:0,guest:0,third:1},'late-player')===0,'Replay falls back to the room’s recorded majority for a player without a vote');
 ok(replayChoice({},'host')===undefined,'Replay does not invent a response when none was recorded');
@@ -394,5 +407,5 @@ ok(!unread.includes('presentation'),'Snapshot does not leak future evidence tabl
  const unicode=await post(`/api/rooms/${code}/action`,{type:'note',text:'猫'.repeat(3000)},key);assert.equal(unicode.status,400);checks++;
  ws.close();
 }finally{await mf.dispose();}
-const report={checks_passed:checks,date:new Date().toISOString(),scope:'Engine, progressive private-discovery privacy and balancing, room-wide majority dialogue decisions with pending-player display and Host override, interactive witness/static-render and expression mapping, localized quest guidance, isolated Cloudflare workerd/SQLite Durable Object and WebSocket synchronization; including real separate challenge SQLite and containment checks; not a browser or blind playtest',limits:['Desktop isolated UI fixture tested; full production Worker/browser end-to-end not tested','Not deployed to a Cloudflare account','No measured play duration','Mobile browser QA remains unverified']};
+const report={checks_passed:checks,date:new Date().toISOString(),scope:'Engine, room-code retention and cleanup, shared evidence pinning and durable private-clue sharing, progressive private-discovery privacy and balancing, room-wide majority dialogue decisions with pending-player display and Host override, explicit witness follow-ups, localized quest guidance, isolated Cloudflare workerd/SQLite Durable Object and WebSocket synchronization; including real separate challenge SQLite and containment checks; not a browser or blind playtest',limits:['Desktop isolated UI fixture tested; full production Worker/browser end-to-end not tested','Not deployed to a Cloudflare account','No measured play duration','Mobile browser QA remains unverified']};
 await writeFile('test-report.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));

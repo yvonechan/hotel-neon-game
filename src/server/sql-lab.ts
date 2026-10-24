@@ -41,4 +41,5 @@ export class SqlLab extends DurableObject<Record<string,never>>{
    }
   });
  }
+ async cleanup(){await this.ctx.storage.delete('budget')}
 }

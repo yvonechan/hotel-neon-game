@@ -2,6 +2,7 @@ export {SqlLab} from './sql-lab';
 import { DurableObject } from 'cloudflare:workers';
 import { create,join,auth,view,act,reconcileDialogues,GameError,type State } from './engine';
 import {querySqlLab,type SqlEnv} from './sql-client';
+import {roomExpiryAt} from './retention';
 interface Env extends SqlEnv {ROOMS:DurableObjectNamespace<GameRoom>;ASSETS:Fetcher}
 const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 function failure(error:unknown){const code=error instanceof GameError?error.code:error instanceof SyntaxError?'json':'internal';return json({error:code},code==='session'?401:code==='internal'?500:400);}
@@ -16,16 +17,17 @@ async function body(request:Request){
 }
 export class GameRoom extends DurableObject<Env>{
  state:State|undefined;
- constructor(ctx:DurableObjectState,env:Env){super(ctx,env);ctx.blockConcurrencyWhile(async()=>{this.state=await ctx.storage.get<State>('room');});}
+ constructor(ctx:DurableObjectState,env:Env){super(ctx,env);ctx.blockConcurrencyWhile(async()=>{this.state=await ctx.storage.get<State>('room');if(this.state){const now=Date.now(),legacy=this.state.lastActiveAt===undefined||this.state.sharedCards===undefined;this.state.createdAt??=now;this.state.lastActiveAt??=this.state.createdAt;this.state.sharedCards??=this.state.notes.filter(note=>note.id.startsWith('card:')).map(note=>note.id.slice(5));if(legacy)await ctx.storage.put('room',this.state);await ctx.storage.setAlarm(Math.max(now,roomExpiryAt(this.state,now)));}});}
  locked(operation:()=>Promise<Response>){return this.ctx.blockConcurrencyWhile(async()=>{try{return await operation()}catch(error){return failure(error)}});}
  online(exclude?:WebSocket){return [...new Set(this.ctx.getWebSockets().filter(ws=>ws!==exclude&&ws.readyState===1).flatMap(ws=>{try{return[ws.deserializeAttachment()?.id]}catch{return[]}}))].filter(Boolean) as string[];}
- async ensureHost(){const s=this.state!;const active=this.online();if(!active.includes(s.host)&&active.length){s.host=active[0];s.revision++;await this.ctx.storage.put('room',s);}}
+ async persist(touch=true){if(!this.state)return;const now=Date.now();if(touch)this.state.lastActiveAt=now;await this.ctx.storage.put('room',this.state);await this.ctx.storage.setAlarm(roomExpiryAt(this.state,now));}
+ ensureHost(){const s=this.state!;const active=this.online();if(!active.includes(s.host)&&active.length){s.host=active[0];s.revision++;return true}return false}
  push(){const s=this.state!;for(const ws of this.ctx.getWebSockets()){try{const id=ws.deserializeAttachment()?.id;const m=s.members.find(m=>m.id===id);if(m)ws.send(JSON.stringify({snapshot:view(s,m,this.online())}));else ws.close(1008,'Seat removed');}catch{}}}
  async fetch(req:Request):Promise<Response>{
   try{
    if(new URL(req.url).pathname==='/init'){
     return await this.locked(async()=>{
-     if(this.state)return json({error:'exists'},409);const b=await body(req);const {state,member}=create(b.code,b.name,b.language);this.state=state;await this.ctx.storage.put('room',state);return json({token:member.token,snapshot:view(state,member)});
+     if(this.state)return json({error:'exists'},409);const b=await body(req);const {state,member}=create(b.code,b.name,b.language);this.state=state;await this.persist();return json({token:member.token,snapshot:view(state,member)});
     });
    }
    if(!this.state)return json({error:'room_not_found'},404);
@@ -33,17 +35,17 @@ export class GameRoom extends DurableObject<Env>{
     const protocols=(req.headers.get('Sec-WebSocket-Protocol')||'').split(',').map(x=>x.trim());
     const m=auth(this.state,protocols[1]||'');const pair=new WebSocketPair();
     this.ctx.acceptWebSocket(pair[1],[m.id]);pair[1].serializeAttachment({id:m.id});
-    await this.locked(async()=>{await this.ensureHost();return json({ok:true})});this.push();return new Response(null,{status:101,webSocket:pair[0],headers:{'Sec-WebSocket-Protocol':'neon'}});
+    await this.locked(async()=>{this.ensureHost();await this.persist();return json({ok:true})});this.push();return new Response(null,{status:101,webSocket:pair[0],headers:{'Sec-WebSocket-Protocol':'neon'}});
    }
    return await this.locked(async()=>{
     const s=this.state!;const path=new URL(req.url).pathname;
     if(path==='/join'){
-     const b=await body(req);const m=join(s,b.name);await this.ctx.storage.put('room',s);this.push();return json({token:m.token,snapshot:view(s,m,this.online())});
+     const b=await body(req);const m=join(s,b.name);await this.persist();this.push();return json({token:m.token,snapshot:view(s,m,this.online())});
     }
     const m=auth(s,req.headers.get('Authorization')?.replace(/^Bearer /,'')||'');
-    if(path==='/snapshot')return json({snapshot:view(s,m,this.online())});
+    if(path==='/snapshot'){await this.persist();return json({snapshot:view(s,m,this.online())});}
     if(path==='/action'){
-     const action=await body(req);const result=await act(s,m,action,{query:input=>querySqlLab(input,s.code,this.env),online:this.online()});await this.ctx.storage.put('room',s);this.push();return json({...result,snapshot:view(s,m,this.online())});
+     const action=await body(req);const result=await act(s,m,action,{query:input=>querySqlLab(input,s.code,this.env),online:this.online()});await this.persist();this.push();return json({...result,snapshot:view(s,m,this.online())});
     }
     return json({error:'not_found'},404);
    });
@@ -52,9 +54,10 @@ export class GameRoom extends DurableObject<Env>{
  async webSocketMessage(ws:WebSocket,message:string|ArrayBuffer){if(message==='ping')ws.send('pong');}
  async webSocketClose(ws:WebSocket,code:number,reason:string){
   try{ws.close([1005,1006,1015].includes(code)?1000:code,reason)}catch{}if(!this.state)return;
-  const active=this.online(ws);await this.locked(async()=>{let changed=false;if(!active.includes(this.state!.host)&&active.length){this.state!.host=active[0];changed=true}if(reconcileDialogues(this.state!,active))changed=true;if(changed){this.state!.revision++;await this.ctx.storage.put('room',this.state)}return json({ok:true})});this.push();
+  const active=this.online(ws);await this.locked(async()=>{let changed=false;if(!active.includes(this.state!.host)&&active.length){this.state!.host=active[0];changed=true}if(reconcileDialogues(this.state!,active))changed=true;if(changed)this.state!.revision++;await this.persist();return json({ok:true})});this.push();
  }
  async webSocketError(ws:WebSocket){try{ws.close(1011,'Connection interrupted')}catch{}}
+ async alarm(){if(!this.state)return;const now=Date.now();if(this.online().length){await this.persist();return}const expires=roomExpiryAt(this.state,now);if(now<expires){await this.ctx.storage.setAlarm(expires);return}const code=this.state.code;try{await this.env.SQL_LABS?.get(this.env.SQL_LABS.idFromName(code)).cleanup()}catch{}this.state=undefined;await this.ctx.storage.deleteAlarm();await this.ctx.storage.deleteAll();}
 }
 export default {
  async fetch(req:Request,env:Env):Promise<Response>{

@@ -94,6 +94,15 @@ Dialogue choices can publish bounded per-room votes through the existing authent
 The five main characters and four supporting hotel characters use separate transparent 4-expression atlases. Portrait selection is deterministic from scene context and response state.
 
 
+## v0.16 retention and witness interaction
+
+Witness pressing now renders a concrete player question followed by the witness's answer; evidence presentation names the selected record in the question. The flow remains local investigation rather than a room-wide story vote.
+
+Each room records creation and last-activity timestamps and schedules a Durable Object alarm. Completed rooms are retained for 24 hours after their last activity, while unfinished rooms are retained for seven inactive days. An alarm never removes a room with an active WebSocket. Expiry deletes the room state, member session tokens and the separate SQL challenge budget; static fictional SQL fixtures contain no room or player data.
+
+Pinned evidence remains a shared, idempotent room action, with duplicate controls disabled in the client. Shared private observations now have their own persistent marker rather than relying on a note that may later be trimmed. A failed share no longer dismisses the private reveal, already-shared clues no longer offer another witness interjection, and failed team-note writes preserve the user's draft.
+
+
 ## v0.15 room-wide dialogue decisions
 
 Important dialogue choices now create a fixed eligible voter set from the players online when the ballot starts. The UI shows vote progress and names each outstanding voter. Once the active quorum has voted, the server computes a majority proposal; a tie follows the Host's own vote. Multiplayer decisions wait for an explicit Host confirmation, and a different Host selection is recorded and labelled as an override. The resulting choice locks for the room and is the only path available in replay.

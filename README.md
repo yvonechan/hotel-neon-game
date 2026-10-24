@@ -1,6 +1,13 @@
-# Hotel NEON — anime mystery prototype v0.15
+# Hotel NEON — anime mystery prototype v0.16
 
 A local multiplayer investigation for 1–7 players. Host is a player; one English/Japanese language per room; no countdown. The story targets about 90 minutes but has not been timed in a blind playtest. Not deployed.
+
+## v0.16 room retention and witness follow-ups
+
+- Pressing a witness statement now shows the team's specific follow-up question and the witness's answer. Presenting evidence also produces an explicit question-and-response exchange.
+- Completed rooms expire 24 hours after their last activity. Unfinished rooms expire after seven inactive days.
+- Connected rooms are never removed by the expiry alarm. Cleanup removes the saved room, member tokens and its separate SQL-lab usage budget.
+- Pinning is idempotent across players and already-pinned records are labelled instead of offering a duplicate action. Private-clue sharing now survives note trimming and only dismisses the reveal after the share succeeds.
 
 ## v0.15 room-wide dialogue decisions
 

@@ -5,7 +5,7 @@ export type Lang='en'|'ja';
 export type Member={id:string;name:string;token:string;cards:number[];notices?:number[]};
 export type PrivateDiscovery={trigger:string;card:number;member:string;seq:number};
 export type DialogueDecision={eligible:string[];votes:Record<string,number>;proposed?:number;override?:number;locked?:number};
-export type State={code:string;language:Lang;host:string;members:Member[];started:boolean;stage:number;pending:boolean;revision:number;unlocked:string[];read:string[];solved:string[];notes:{id:string;by:string;text:string}[];pins:string[];boardLocked:boolean;tokenShared:boolean;recovered:boolean;verified:boolean;sqlRevealed:boolean;originalOpened:boolean;archiveOpened:boolean;controllerOpened:boolean;hints:Record<string,number>;dialogueVotes:Record<string,Record<string,number>>;dialogueDecisions?:Record<string,DialogueDecision>;privateDiscoveries?:PrivateDiscovery[];complete:boolean};
+export type State={code:string;language:Lang;host:string;members:Member[];started:boolean;stage:number;pending:boolean;revision:number;unlocked:string[];read:string[];solved:string[];notes:{id:string;by:string;text:string}[];pins:string[];sharedCards?:string[];boardLocked:boolean;tokenShared:boolean;recovered:boolean;verified:boolean;sqlRevealed:boolean;originalOpened:boolean;archiveOpened:boolean;controllerOpened:boolean;hints:Record<string,number>;dialogueVotes:Record<string,Record<string,number>>;dialogueDecisions?:Record<string,DialogueDecision>;privateDiscoveries?:PrivateDiscovery[];complete:boolean;createdAt?:number;lastActiveAt?:number};
 export class GameError extends Error { constructor(public code:string){super(code);} }
 const requireThat=(ok:unknown,code:string)=>{if(!ok)throw new GameError(code);};
 const unique=(a:string[])=>[...new Set(a)];
@@ -34,7 +34,7 @@ export function create(code:string,name:string,language:Lang){
  requireThat(language==='en'||language==='ja','language');
  const member:Member={id:crypto.randomUUID(),name:text(name,30),token:token(),cards:[],notices:[]};
  requireThat(member.name,'name');
- const state:State={code,language,host:member.id,members:[member],started:false,stage:1,pending:false,revision:1,unlocked:[...initial],read:[],solved:[],notes:[],pins:[],boardLocked:false,tokenShared:false,recovered:false,verified:false,sqlRevealed:false,originalOpened:false,archiveOpened:false,controllerOpened:false,hints:{},dialogueVotes:{},dialogueDecisions:{},privateDiscoveries:[],complete:false};
+ const now=Date.now();const state:State={code,language,host:member.id,members:[member],started:false,stage:1,pending:false,revision:1,unlocked:[...initial],read:[],solved:[],notes:[],pins:[],sharedCards:[],boardLocked:false,tokenShared:false,recovered:false,verified:false,sqlRevealed:false,originalOpened:false,archiveOpened:false,controllerOpened:false,hints:{},dialogueVotes:{},dialogueDecisions:{},privateDiscoveries:[],complete:false,createdAt:now,lastActiveAt:now};
  return {state,member};
 }
 export function auth(s:State,key:string){const m=s.members.find(m=>m.token===key);requireThat(m,'session');return m!;}
@@ -45,7 +45,8 @@ export function join(s:State,name:string){
  s.revision++;return m;
 }
 export function view(s:State,m:Member,online:string[]=[]){
- const cardView=(i:number)=>{const card=content.private_cards[i];return{id:card.id,title:card.title[s.language],location:card.location[s.language],text:card.text[s.language],shared:s.notes.some(n=>n.id==='card:'+card.id)}};
+ const cardShared=(id:string)=>(s.sharedCards||[]).includes(id)||s.notes.some(n=>n.id==='card:'+id);
+ const cardView=(i:number)=>{const card=content.private_cards[i];return{id:card.id,title:card.title[s.language],location:card.location[s.language],text:card.text[s.language],shared:cardShared(card.id)}};
  const pending=(m.notices||[])[0];const latest=(s.privateDiscoveries||[]).at(-1);const latestMember=latest&&s.members.find(x=>x.id===latest.member);
  return {code:s.code,language:s.language,host:s.host,me:m.id,started:s.started,stage:s.stage,pending:s.pending,revision:s.revision,complete:s.complete,
  members:s.members.map(x=>({id:x.id,name:x.name,online:online.includes(x.id)})),
@@ -89,7 +90,7 @@ export async function act(s:State,m:Member,a:Record<string,unknown>,services:Ser
  case 'language':requireThat(s.host===m.id&&!s.started,'host_lobby');requireThat(a.language==='en'||a.language==='ja','language');s.language=a.language as Lang;break;
  case 'start':{
   requireThat(s.host===m.id&&!s.started,'host_lobby');s.started=true;
-  s.members.forEach(x=>{x.cards=[];x.notices=[]});s.privateDiscoveries=[];break;
+  s.members.forEach(x=>{x.cards=[];x.notices=[]});s.privateDiscoveries=[];s.sharedCards=[];break;
  }
  case 'read':{const id=text(a.id,80);result.record=record(s,id);const trigger=recordPrivateTriggers[id];if(trigger)discoverPrivate(s,m,trigger,services.online,false);break;}
  case 'discover-private':requireThat(a.trigger==='tour-spa','private_trigger');discoverPrivate(s,m,'tour-spa',services.online);break;
@@ -139,11 +140,11 @@ export async function act(s:State,m:Member,a:Record<string,unknown>,services:Ser
  }
  case 'remove-member':{
   requireThat(s.host===m.id,'host_lobby');const id=text(a.id,80);requireThat(id!==m.id&&s.members.some(x=>x.id===id),'member');
-  const removed=s.members.find(x=>x.id===id)!;s.members=s.members.filter(x=>x.id!==id);const transferred=removed.cards.filter(i=>!m.cards.includes(i));const unread=transferred.filter(i=>!s.notes.some(n=>n.id==='card:'+content.private_cards[i].id));m.cards=unique([...m.cards,...removed.cards].map(String)).map(Number);m.notices=unique([...(m.notices||[]),...unread].map(String)).map(Number);for(const discovery of s.privateDiscoveries||[])if(discovery.member===id)discovery.member=m.id;for(const ballot of Object.values(s.dialogueVotes||{}))delete ballot[id];for(const decision of Object.values(s.dialogueDecisions||{})){delete decision.votes[id];decision.eligible=decision.eligible.filter(memberId=>memberId!==id)}reconcileDialogues(s,services.online);break;
+  const removed=s.members.find(x=>x.id===id)!;s.members=s.members.filter(x=>x.id!==id);const transferred=removed.cards.filter(i=>!m.cards.includes(i));const unread=transferred.filter(i=>{const cardId=content.private_cards[i].id;return!(s.sharedCards||[]).includes(cardId)&&!s.notes.some(n=>n.id==='card:'+cardId)});m.cards=unique([...m.cards,...removed.cards].map(String)).map(Number);m.notices=unique([...(m.notices||[]),...unread].map(String)).map(Number);for(const discovery of s.privateDiscoveries||[])if(discovery.member===id)discovery.member=m.id;for(const ballot of Object.values(s.dialogueVotes||{}))delete ballot[id];for(const decision of Object.values(s.dialogueDecisions||{})){delete decision.votes[id];decision.eligible=decision.eligible.filter(memberId=>memberId!==id)}reconcileDialogues(s,services.online);break;
  }
  case 'note':requireThat(!s.boardLocked,'board_locked');requireThat(text(a.text,600),'empty');s.notes.push({id:crypto.randomUUID(),by:m.name,text:text(a.text,600)});s.notes=s.notes.slice(-150);break;
  case 'share-card':{
-  requireThat(!s.boardLocked,'board_locked');const card=content.private_cards.find(c=>c.id===a.id);requireThat(card&&m.cards.some(i=>content.private_cards[i].id===card.id),'card');const id='card:'+card!.id;if(!s.notes.some(n=>n.id===id))s.notes.push({id,by:m.name,text:card!.text[s.language]});s.notes=s.notes.slice(-150);break;
+  requireThat(!s.boardLocked,'board_locked');const card=content.private_cards.find(c=>c.id===a.id);requireThat(card&&m.cards.some(i=>content.private_cards[i].id===card.id),'card');const id='card:'+card!.id;const wasShared=(s.sharedCards||[]).includes(card!.id)||s.notes.some(n=>n.id===id);s.sharedCards=unique([...(s.sharedCards||[]),card!.id]);if(!wasShared)s.notes.push({id,by:m.name,text:card!.text[s.language]});s.notes=s.notes.slice(-150);break;
  }
  case 'dialogue-vote':{
   const key=text(a.key,80);const choice=Number(a.choice),count=dialogueChoiceCounts[key];requireThat(Number.isInteger(choice)&&count!==undefined&&choice>=0&&choice<count&&dialogueAvailable(s,key),'dialogue_vote');
