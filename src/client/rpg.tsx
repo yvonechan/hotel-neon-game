@@ -1,4 +1,5 @@
 import React,{useEffect,useRef,useState} from 'react';
+import {ServiceDirectory} from './service-directory';
 export type Lang='en'|'ja';
 type RecordInfo={id:string;read:boolean;title:string;tool:string};
 export type GameView={stage:number;pending:boolean;complete:boolean;verified:boolean;records:RecordInfo[];board:{locked:boolean};receipts?:{title:string;takeaway:string}[];};
@@ -52,7 +53,8 @@ export function KumaChat({lang,stage,open=true,onAction,onNavigate,onClose}:{lan
 }
 export function OpeningScene({lang}:{lang:Lang}){const t=(en:string,ja:string)=>lang==='ja'?ja:en;return <div className="opening-scene"><div className="scene-image"><BotFace pip/><div><span className="eyebrow">PIP · {t('MISSING','行方不明')}</span><h2>{t('You came for the hot spring.','温泉に来たはずなのに。')}</h2><p>{t('You got an incident.','事件が待っていた。')}</p></div></div><div className="scene-timeline">{[['18:35','⊙','PIP enters the demo room','PIPが実演室へ'],['18:55','▷','PIP appears on LIVE PREVIEW','画面にはPIPの姿'],['19:00','!','A threat. An empty room.','脅迫文。PIPは消えた。']].map(([time,icon,en,ja])=><div key={time}><time>{time}</time><span>{icon}</span><b>{t(en,ja)}</b></div>)}</div></div>}
 export function CastPortrait({index}:{index:number}){const colors=['#d7a0bc','#8dc5cb','#edbb8c','#9ab89a','#b6a3dc'];return <svg className="cast-portrait" viewBox="0 0 90 100" aria-hidden="true"><rect width="90" height="100" rx="17" fill={colors[index]+'33'}/><circle cx="45" cy="42" r="26" fill={colors[index]}/><path d="M12 100q1-33 33-33t33 33" fill={colors[index]}/><path d="M23 39q-3-23 22-23t22 23l-13-9-9 9-10-11z" fill="#33405b"/><ellipse cx="45" cy="48" rx="20" ry="23" fill="#f4d1b6"/><path d="M24 38q-1-22 22-22 23 1 21 23l-12-10-9 10-10-9z" fill="#33405b"/><path d="M34 48h5m12 0h5" stroke="#34405a" strokeWidth="3" strokeLinecap="round"/><path d="M40 59q5 4 10 0" fill="none" stroke="#ab6d6e" strokeWidth="2"/>{index===1&&<path d="M29 43h13v12H29zm19 0h13v12H48zm-6 4h6" fill="none" stroke="#465772" strokeWidth="2"/>}{index===2&&<path d="M23 23V13q0-10 12-6 10-12 20 0 12-4 12 6v10z" fill="#f1ece2"/>}<path d="M35 74l10 13 10-13" fill="#ece4df"/>{index===0&&<rect x="55" y="76" width="17" height="22" rx="3" fill="#354458" stroke="#d8dfeb"/>}</svg>}
-export function EvidenceBody({id,body}:{id:string;body:string}){
+export function EvidenceBody({id,body,lang='en',onOpenFile}:{id:string;body:string;lang?:Lang;onOpenFile?:(name:string)=>void}){
+ if(id==='service-index')return <ServiceDirectory lang={lang} body={body} onOpenFile={onOpenFile}/>;
  if(id==='suspects')return <div className="cast-grid">{body.split('\n').filter(Boolean).map((line,i)=><div key={i}><CastPortrait index={i%5}/><p>{line}</p></div>)}</div>;
  if(id==='dock-log'||id==='playlist-history')return <div className="evidence-timeline">{body.split('\n').filter(Boolean).map((line,i)=><div key={i}><span>{line.match(/\d{2}:\d{2}/)?.[0]||'•'}</span><p>{line}</p></div>)}</div>;
  return <div className="document-body">{body.split('\n').map((p,i)=><p key={i}>{p}</p>)}</div>

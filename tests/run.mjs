@@ -247,6 +247,7 @@ await rejects(()=>act(progressive,p1,{type:'discover-private',trigger:'stage-cue
 
 // UI guidance must follow actual evidence gates without supplying answers.
 const content=JSON.parse(await readFile('src/server/content.json','utf8'));
+for(const language of ['en','ja']){const index=content.evidence.find(e=>e.id==='service-index');const directory=renderToStaticMarkup(React.createElement(EvidenceBody,{id:'service-index',body:index.body[language],lang:language,onOpenFile(){}}));ok(directory.includes('service-folder-tree')&&directory.includes(language==='en'?'You are here':'現在地')&&(directory.match(/<button/g)||[]).length===3,'Service index shows a localized folder tree with exactly three public file actions in '+language);ok(directory.includes('MNT-44.txt')&&!directory.includes('../../archive/maintenance/MNT-44.txt'),'Folder map identifies the archived revision without supplying the traversal answer in '+language);}
 const allRecords=content.evidence.map(e=>({...e,read:true,title:e.title.en}));
 for(let stage=1;stage<=6;stage++){
  const v={stage,pending:false,complete:false,verified:true,records:allRecords,board:{locked:false}};

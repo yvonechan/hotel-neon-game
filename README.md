@@ -4,6 +4,8 @@ A local multiplayer investigation for 1–7 players. Host is a player; one Engli
 
 ## v0.18 Casebook organization
 
+The public service-document index is now a collapsible folder structure with the current folder marked, clickable public files and a read-only archive reference. Players still enter the relative archive path themselves; the directory map does not automatically open the restricted record.
+
 IMG_2860 now includes a cast-matched event-desk illustration with zoom/pan and an English/Japanese character key. The caption preserves the photograph's evidentiary limit: it identifies people and EVT-01, but does not reveal tablet screen contents.
 
 Support conversation attachments now show a localized badge and case screenshot, with a click-to-enlarge viewer and keyboard dismissal. Asking for proof resends the images. Kitchen, reception and maintenance calls have humorous localized dialogue; unlisted extensions receive a switchboard response. Only the trusted case-support extension verifies the request or unlocks evidence.
