@@ -2,10 +2,11 @@ import content from './content.json';
 import {localizeEvidence,type LocalizedPresentation} from '../shared/evidence';
 
 export type Lang='en'|'ja';
+export type Accusation={seq:number;culprit:string};
 export type Member={id:string;name:string;token:string;cards:number[];notices?:number[]};
 export type PrivateDiscovery={trigger:string;card:number;member:string;seq:number};
 export type DialogueDecision={eligible:string[];votes:Record<string,number>;proposed?:number;override?:number;locked?:number};
-export type State={code:string;language:Lang;host:string;members:Member[];started:boolean;stage:number;pending:boolean;revision:number;unlocked:string[];read:string[];solved:string[];notes:{id:string;by:string;text:string}[];pins:string[];sharedCards?:string[];boardLocked:boolean;tokenShared:boolean;recovered:boolean;verified:boolean;sqlRevealed:boolean;originalOpened:boolean;archiveOpened:boolean;controllerOpened:boolean;hints:Record<string,number>;dialogueVotes:Record<string,Record<string,number>>;dialogueDecisions?:Record<string,DialogueDecision>;privateDiscoveries?:PrivateDiscovery[];complete:boolean;kumaSourcesUnlocked?:boolean;createdAt?:number;lastActiveAt?:number};
+export type State={code:string;language:Lang;host:string;members:Member[];started:boolean;stage:number;pending:boolean;revision:number;unlocked:string[];read:string[];solved:string[];notes:{id:string;by:string;text:string}[];pins:string[];sharedCards?:string[];boardLocked:boolean;tokenShared:boolean;recovered:boolean;verified:boolean;sqlRevealed:boolean;originalOpened:boolean;archiveOpened:boolean;controllerOpened:boolean;hints:Record<string,number>;dialogueVotes:Record<string,Record<string,number>>;dialogueDecisions?:Record<string,DialogueDecision>;privateDiscoveries?:PrivateDiscovery[];complete:boolean;accusation?:Accusation;kumaSourcesUnlocked?:boolean;createdAt?:number;lastActiveAt?:number};
 export class GameError extends Error { constructor(public code:string){super(code);} }
 const requireThat=(ok:unknown,code:string)=>{if(!ok)throw new GameError(code);};
 const unique=(a:string[])=>[...new Set(a)];
@@ -53,7 +54,7 @@ export function view(s:State,m:Member,online:string[]=[]){
  records:s.unlocked.map(id=>{const e=byId.get(id)!;return{id,title:e.title[s.language],tool:e.tool,read:s.read.includes(id),pinned:!s.boardLocked&&s.pins.includes(id)}}),
  cards:m.cards.map(cardView),privateDiscovery:pending===undefined?null:cardView(pending),privateEvent:latest&&latestMember?{seq:latest.seq,member:latest.member,name:latestMember.name,location:content.private_cards[latest.card].location[s.language]}:null,
  board:{locked:s.boardLocked,tokenShared:s.tokenShared,recovered:s.recovered,notes:s.boardLocked?[]:s.notes,pins:s.boardLocked?[]:s.pins},
- verified:s.verified,kumaSourcesUnlocked:!!s.kumaSourcesUnlocked,solved:s.solved,dialogueVotes:s.dialogueVotes||{},dialogueDecisions:s.dialogueDecisions||{},
+ accusation:s.accusation,verified:s.verified,kumaSourcesUnlocked:!!s.kumaSourcesUnlocked,solved:s.solved,dialogueVotes:s.dialogueVotes||{},dialogueDecisions:s.dialogueDecisions||{},
  receipts:s.solved.map(id=>{const p=puzzles.find(p=>p.id===id)!;return{id,flag:p.flag,title:p.title[s.language],takeaway:p.takeaway[s.language]}}),
  puzzle:s.stage<=5?{id:puzzles[s.stage-1].id,title:puzzles[s.stage-1].title[s.language],task:puzzles[s.stage-1].task[s.language],hints:puzzles[s.stage-1].hints.slice(0,s.hints[puzzles[s.stage-1].id]||0).map(h=>h[s.language])}:null};
 }
@@ -198,6 +199,11 @@ export async function act(s:State,m:Member,a:Record<string,unknown>,services:Ser
   if(s.complete){result.record=record(s,'reveal');break;}
   requireThat(s.stage===6&&!s.complete,'stage');
   const v=(a.answers||{}) as Record<string,unknown>;const selected=Array.isArray(v.evidence)?v.evidence as string[]:[];
+  requireThat(['mio','ren','aya','daichi','sora'].includes(String(v.culprit)),'deduction');
+  if(v.culprit!=='mio'){
+   s.accusation={seq:(s.accusation?.seq||0)+1,culprit:String(v.culprit)};
+   result.message=s.language==='ja'?'指名された人物が反論しています。資料を照合して、推理を修正しましょう。':'The accused challenges your theory. Compare the records and revise your deduction.';break;
+  }
   requireThat(v.culprit==='mio'&&v.route==='rear'&&v.deception==='recording'&&v.motive==='deflect','deduction');
   for(const group of content.finale.evidence_groups)requireThat(group.sources.some(id=>selected.includes(id)&&s.read.includes(id)),'evidence_groups');
   s.complete=true;unlock(s,['reveal','ending']);result.record=record(s,'reveal');break;

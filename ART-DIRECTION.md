@@ -53,3 +53,9 @@ Prompt: Production environment atlas for the opening holiday chapter of an origi
 ## v0.8 transparent portrait edit
 
 `public/art/character-cutouts.png` is a transparent PNG edit of `character-portraits.png`. The original atlas is retained. Edit instruction: preserve the exact nine-character 3×3 layout, faces, clothing, proportions and cell positions; remove only the dark teal background and use genuine alpha transparency. No rearrangement or new characters. The scene layer uses the cutout atlas; navigation and dialogue occupy separate layout rows.
+
+## v0.20 ending illustration
+
+Asset: `public/art/holiday-celebration.webp`. Generated with the built-in imagegen tool using `hotel-neon-cast.png`, `holiday-intro.png` and `pip-dock-camera.webp` as character, atmosphere and PIP references. The completed-case panel displays the full composition; the last four epilogue beats use it as their scene without duplicate portrait overlays. This depicts supporting cast celebrating with the viewer, rather than inventing a fixed number of player avatars.
+
+Prompt: A polished wide anime visual-novel ending CG at Hotel NEON: Ren, Aya, Daichi and Sora in modest closed yukata raise cups toward the detective team at a lavish kaiseki dinner on a lantern-lit terrace beside a steaming mountain hot spring at night. Include sashimi, tempura, victory puddings, recovered mint-and-cream PIP safely stationary on a dry dock away from water, and bear-shaped KUMA beside honey toast. Preserve reference identities and warm amber/cool teal atmosphere. Use a viewer place setting in the foreground, keep the lower quarter simple for dialogue UI, no fixed player avatars, no Mio, no captions, text, watermarks, panels or collage.

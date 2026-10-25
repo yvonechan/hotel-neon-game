@@ -153,3 +153,7 @@ An independent source reviewer inspected SQL containment. This is not a producti
 ## v0.8 layout correction
 
 Conversation overlays use one explicit `minmax(0,1fr)` grid column with stretched alignment. An old flex-layout `justify-content:flex-end` rule was removed; it had carried into the newer grid layout and allowed long dialogue to size the column beyond the viewport. Navigation, character and dialogue now share the same bounded column. Current correction has passed the production build; full browser verification remains pending.
+
+### v0.20 — deduction feedback and holiday finale
+
+Failed actions now show a persistent, dismissible flash above game overlays. Incorrect final suspects trigger a room-wide counter-argument event: each player reads at their own pace, existing answers and evidence remain intact, and a teammate can submit a revised theory. Correct suspects with an unsupported explanation still receive deduction feedback. A new illustrated hot-spring dinner CG accompanies the bilingual epilogue celebration and the completed case retains a team-name celebration panel with replay access.

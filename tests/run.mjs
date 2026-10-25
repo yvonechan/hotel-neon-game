@@ -13,7 +13,7 @@ const React=await import('react');
 await build({entryPoints:['src/client/narrative.tsx'],outfile:'.test/narrative.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {ScenePlayer,WorldScene,openingBeats,parseTestimony,dialogueEmotion,replayChoice}=await import('../.test/narrative.mjs?'+Date.now());
 await build({entryPoints:['src/client/story.ts'],outfile:'.test/story.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
-const {nextStory,chapterScripts,clearScripts,explanationBeats,epilogueBeats,dialogueRecordKind}=await import('../.test/story.mjs?'+Date.now());
+const {nextStory,chapterScripts,clearScripts,explanationBeats,epilogueBeats,counterBeats,dialogueRecordKind}=await import('../.test/story.mjs?'+Date.now());
 await build({entryPoints:['src/client/visuals.tsx'],outfile:'.test/visuals.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {characterFor,environmentFor,atlasPosition,expressionPosition,staffExpressionPosition,recordCategory,SpeakerPortrait}=await import('../.test/visuals.mjs?'+Date.now());
 await build({entryPoints:['src/client/phone.tsx'],outfile:'.test/phone.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
@@ -265,6 +265,7 @@ for(const language of ['en','ja']){
  const sourceGuide=renderToStaticMarkup(React.createElement(TaskSources,{stage:5,records:view(s,m).records.map(r=>({...r,title:content.evidence.find(e=>e.id===r.id).title[language]})),lang:language,onGo(){}}));ok(sourceGuide.includes(content.evidence.find(e=>e.id==='dock-log').title[language]),'Chapter 5 task links back to the earlier removal log in '+language);
 }
 for(const id of ['search-help','source-supplement','source-policy','cue-sheet','kitchen-note']){const e=content.evidence.find(e=>e.id===id);ok(e.presentation?.kind==='report'&&['en','ja'].every(lang=>e.presentation.sections[lang].map(s=>s.text).join('\n')===e.body[lang]),'Structured clue preserves every source line in both languages: '+id);}
+const holidayImage=await readFile('public/art/holiday-celebration.webp');ok(holidayImage.toString('ascii',0,4)==='RIFF'&&holidayImage.toString('ascii',8,12)==='WEBP','Celebration dinner is packaged as a real optimized WebP asset');
 const pipImage=await readFile('public/art/pip-dock-camera.webp');ok(pipImage.toString('ascii',8,12)==='WEBP','Stored PIP camera image is packaged');
 for(const language of ['en','ja']){const index=content.evidence.find(e=>e.id==='service-index');const directory=renderToStaticMarkup(React.createElement(EvidenceBody,{id:'service-index',body:index.body[language],lang:language,onOpenFile(){}}));ok(directory.includes('service-folder-tree')&&directory.includes(language==='en'?'You are here':'現在地')&&(directory.match(/<button/g)||[]).length===3,'Service index shows a localized public folder with exactly three file actions in '+language);ok(!directory.includes('MNT-44.txt')&&!directory.includes('/archive/maintenance/'),'Public index does not give away the archived filename or storage path in '+language);}
 const allRecords=content.evidence.map(e=>({...e,read:true,title:e.title.en}));
@@ -361,7 +362,7 @@ for(const language of ['en','ja']){
  ok(beats.some(beat=>beat.speaker[0]==='Mio')&&beats.filter(beat=>beat.speaker[0]==='Your team').length>=3&&!beats.some(beat=>beat.choice?.length===1),'Final scene is player-led without one-option room votes');
  const epilogue=epilogueBeats(content.evidence.find(e=>e.id==='ending').body[language],language);
  ok(epilogue.some(beat=>beat.face==='pip'&&beat.choice?.length===2),'PIP return has two holiday responses');
- ok(epilogue.at(-1).text[language==='en'?0:1].includes(language==='en'?'Autonomous mode stays disabled':'自律モードは修理まで停止'),'Epilogue preserves repair restriction');
+ ok(epilogue.some(beat=>beat.text[language==='en'?0:1].includes(language==='en'?'Autonomous mode stays disabled':'自律モードは修理まで停止')),'Epilogue preserves repair restriction');
 }
 ok(['support-request','security-response','album-index','board-locked'].every(id=>dialogueRecordKind(id)==='record'),'Story-bearing reports use the conversation player');
 const revealText=content.evidence.find(e=>e.id==='reveal').body.en;ok(revealText.includes('recover PIP after the ballroom cleared')&&revealText.includes('five security lessons')&&revealText.includes('Ren returned the console'),'Reveal explains Mio’s intended endgame, the security chain and Ren’s non-complicity');
@@ -481,6 +482,16 @@ ok(!unread.includes('presentation'),'Snapshot does not leak future evidence tabl
  const guardedSource=await (await sevenPost(sevenPeers[1],{type:'sources'})).json();ok(!guardedSource.snapshot.kumaSourcesUnlocked&&!guardedSource.snapshot.records.some(r=>r.id==='source-supplement'),'Actual seven-client Worker keeps KUMA source documents hidden before discovery');
  const sharedTray=new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(Error('KUMA discovery was not synchronized')),5000);const listener=event=>{const data=JSON.parse(event.data);if(data.snapshot?.kumaSourcesUnlocked&&data.snapshot.records.some(r=>r.id==='source-supplement')){clearTimeout(timeout);sevenSockets[1].removeEventListener('message',listener);resolve()}};sevenSockets[1].addEventListener('message',listener)});
  const openedTray=await (await sevenPost(sevenPeers[3],{type:'kuma-chat',message:'I will buy you honey toast'})).json();await sharedTray;ok(openedTray.snapshot.kumaSourcesUnlocked&&openedTray.record.id==='source-supplement','One player’s KUMA discovery unlocks the source tray on another real WebSocket');
+
+ // Advance the same seven live clients to the finale and observe the rejection event on every socket.
+ const inspectSeven=async(...ids)=>{for(const id of ids)await sevenPost(sevenHost,{type:'read',id})};
+ await inspectSeven('source-supplement','source-policy','safety-report','kitchen-note');await sevenPost(sevenHost,{type:'submit',puzzle:'prompt',answers:{paragraph:'B',report:'SAF-17',mode:'manual_only'}});await sevenPost(sevenHost,{type:'continue',stage:2});
+ await sevenPost(sevenHost,{type:'verify',extension:'204'});await inspectSeven('case-settings','security-response');await sevenPost(sevenHost,{type:'submit',puzzle:'social',answers:{capability:'board_owner',need:'unnecessary'}});await sevenPost(sevenHost,{type:'continue',stage:3});
+ await sevenPost(sevenHost,{type:'album'});await inspectSeven('image-details','photo-sequence');await sevenPost(sevenHost,{type:'original',asset:'IMG_2841'});await sevenPost(sevenHost,{type:'submit',puzzle:'metadata',answers:{capture:'18:43',route:'MNT-44',contents:'unknown'}});await sevenPost(sevenHost,{type:'continue',stage:4});
+ await sevenPost(sevenHost,{type:'file',path:'../../archive/maintenance/MNT-44.txt'});await sevenPost(sevenHost,{type:'controller',controller:'CT-44'});await sevenPost(sevenHost,{type:'operations'});await inspectSeven('route-archive','route-ticket','dock-inventory','playlist-history','media-manifest','cue-sheet');await sevenPost(sevenHost,{type:'submit',puzzle:'path',answers:{location:'LA-B',source:'REH-1410',departure:'18:42'}});await sevenPost(sevenHost,{type:'continue',stage:5});await inspectSeven('review-notice','photo-late','source-revision');
+ const allCounters=Promise.all(sevenSockets.map(socket=>new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(Error('Missing shared accusation')),5000);const listener=event=>{if(event.data==='pong')return;const data=JSON.parse(event.data);if(data.snapshot?.accusation?.culprit==='aya'){clearTimeout(timeout);socket.removeEventListener('message',listener);resolve(data.snapshot)}};socket.addEventListener('message',listener)})));
+ const rejectedTheory=await (await sevenPost(sevenPeers[2],{type:'finale',answers:{culprit:'aya',route:'rear',deception:'recording',motive:'deflect'}})).json();const counterSnapshots=await allCounters;ok(counterSnapshots.length===7&&counterSnapshots.every(s=>s.accusation.seq===1&&!s.complete)&&rejectedTheory.snapshot.stage===6,'All seven real WebSockets receive the same failed accusation without completing the case');
+ const success=await (await sevenPost(sevenPeers[0],{type:'finale',answers:{culprit:'mio',route:'rear',deception:'recording',motive:'deflect',evidence:['booking-receipts','photo-original','playlist-history','review-notice','photo-late','source-revision']}})).json();ok(success.snapshot.complete&&success.snapshot.records.some(r=>r.id==='ending'),'A different player can correct the theory and unlock the celebration');
  const removed=sevenPeers[5];await sevenPost(sevenHost,{type:'remove-member',id:removed.snapshot.me});ok((await sevenPost(removed,{type:'note',text:'Should fail'})).status===401,'Removing a connected seat immediately revokes concurrent action access');
  for(const socket of sevenSockets)socket.close();
  // A host absent before any other connection must not strand the lobby.
@@ -497,6 +508,26 @@ ok(!unread.includes('presentation'),'Snapshot does not leak future evidence tabl
  assert.equal(oversized.status,400);ok((await oversized.json()).error==='size','Streamed bodies are byte-limited without Content-Length');
  const unicode=await post(`/api/rooms/${code}/action`,{type:'note',text:'猫'.repeat(3000)},key);assert.equal(unicode.status,400);checks++;
  ws.close();
+// Failed final theories are persistent room events, with no progression or evidence loss.
+for(const language of ['en','ja']){
+ const {state:challenged,member:lead}=make(language);const peer=join(challenged,'Counter witness');challenged.stage=6;challenged.started=true;
+ const before=JSON.stringify({read:challenged.read,pins:challenged.pins,solved:challenged.solved});
+ for(const [i,culprit] of ['ren','aya','daichi','sora'].entries()){
+  const result=await act(challenged,lead,{type:'finale',answers:{culprit,route:'rear',deception:'recording',motive:'deflect'}});
+  ok(!challenged.complete&&!challenged.pending&&challenged.stage===6&&challenged.accusation.seq===i+1,'Wrong '+culprit+' theory permits retry in '+language);
+  ok(view(challenged,challenged.members[1]).accusation.culprit===culprit&&result.message,'Counter argument is visible to a different seat in '+language);
+  const beats=counterBeats(culprit);ok(beats.length>=4&&beats[1].speaker[0].toLowerCase()===culprit&&beats.every(b=>b.text[language==='en'?0:1]),'Localized counter dialogue responds as '+culprit);
+ }
+ ok(before===JSON.stringify({read:challenged.read,pins:challenged.pins,solved:challenged.solved}),'Wrong accusations preserve evidence and solved chapters');
+ await rejects(()=>act(challenged,lead,{type:'finale',answers:{culprit:'unknown'}}),'deduction');
+ await rejects(()=>act(challenged,lead,{type:'finale',answers:{culprit:'mio',route:'front',deception:'recording',motive:'deflect'}}),'deduction');
+}
+const counterMarkup=renderToStaticMarkup(React.createElement(ScenePlayer,{lang:'en',kind:'counter',sourceId:'aya',onClose(){},onComplete(){},onPins(){}}));ok(counterMarkup.includes('THEORY CHALLENGED')&&counterMarkup.includes('current theory'),'Counter scene renders as a narrative rather than empty testimony');
+for(const language of ['en','ja']){const beats=epilogueBeats(content.evidence.find(e=>e.id==='ending').body[language],language);ok(beats.slice(-4).every(b=>b.environment==='spring')&&beats.at(-1).speaker[0]==='Your team','Celebration ends with the team at the spring in '+language)}
+ok(mainSource.includes('deduction-flash')&&mainSource.includes('aria-live="assertive"')&&mainSource.includes('holiday-finish'),'Feedback and persistent team completion panel are present');
+
+
 }finally{await mf.dispose();}
-const report={checks_passed:checks,date:new Date().toISOString(),scope:'Guided task questions and automatic finale evidence, bilingual code reference and visual PIP evidence, keyword-gated KUMA discovery and simulated index search with real shared WebSocket unlock, engine, chapter-organized Casebook and current leads, revised mystery causality and six-part finale evidence, five-theme security recap, room-code retention and cleanup, shared evidence pinning and durable private-clue sharing, room-wide majority dialogue decisions with pending-player display and Host override, explicit witness follow-ups, isolated Cloudflare workerd/SQLite Durable Object and WebSocket synchronization; including real separate challenge SQLite and containment checks; not a browser or blind playtest',limits:['Desktop isolated UI fixture tested; full production Worker/browser end-to-end not tested','Not deployed to a Cloudflare account','No measured play duration','Mobile browser QA remains unverified']};
+
+const report={checks_passed:checks,date:new Date().toISOString(),scope:'Persistent error flashes, bilingual suspect counter-arguments synchronized across seven real WebSockets with teammate retry and completion, hot-spring celebration and preserved repair restriction; guided task questions and automatic finale evidence, bilingual code reference and visual PIP evidence, keyword-gated KUMA discovery and simulated index search with real shared WebSocket unlock, engine, chapter-organized Casebook and current leads, revised mystery causality and six-part finale evidence, five-theme security recap, room-code retention and cleanup, shared evidence pinning and durable private-clue sharing, room-wide majority dialogue decisions with pending-player display and Host override, explicit witness follow-ups, isolated Cloudflare workerd/SQLite Durable Object and WebSocket synchronization; including real separate challenge SQLite and containment checks; not a browser or blind playtest',limits:['Desktop isolated UI fixture tested; full production Worker/browser end-to-end not tested','Not deployed to a Cloudflare account','No measured play duration','Mobile browser QA remains unverified']};
 await writeFile('test-report.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
