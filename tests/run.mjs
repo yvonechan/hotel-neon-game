@@ -24,6 +24,8 @@ const {hotelTourStops}=await import('../.test/intro.mjs?'+Date.now());
 const mainSource=await readFile('src/client/main.tsx','utf8');
 const workerSource=await readFile('src/server/worker.ts','utf8');
 const sqlLabSource=await readFile('src/server/sql-lab.ts','utf8');
+await build({entryPoints:['src/client/connection.ts'],outfile:'.test/connection.mjs',bundle:true,platform:'node',format:'esm',logLevel:'silent'});
+const {monitorSocket}=await import('../.test/connection.mjs?'+Date.now());
 await build({entryPoints:['src/server/retention.ts'],outfile:'.test/retention.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {ABANDONED_ROOM_TTL_MS,COMPLETED_ROOM_TTL_MS,roomExpiryAt}=await import('../.test/retention.mjs?'+Date.now());
 await build({entryPoints:['src/server/sql-client.ts'],outfile:'.test/sql-client.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
@@ -44,6 +46,8 @@ let checks=0;
 try{
 const ok=(value,message)=>{assert.ok(value,message);checks++};
 const rejects=async(fn,code)=>{await assert.rejects(fn,e=>e.code===code);checks++};
+let clockNow=0,clockId=0;const scheduled=new Map();const fakeClock={set:(fn,ms)=>{const id=++clockId;scheduled.set(id,{fn,at:clockNow+ms});return id},clear:id=>scheduled.delete(id)};const advance=ms=>{const end=clockNow+ms;while(true){const next=[...scheduled].sort((a,b)=>a[1].at-b[1].at)[0];if(!next||next[1].at>end)break;clockNow=next[1].at;scheduled.delete(next[0]);next[1].fn()}clockNow=end};
+let pings=0,timeouts=0;const connectionMonitor=monitorSocket({send:()=>pings++},()=>timeouts++,fakeClock);ok(pings===1,'Heartbeat checks a newly opened socket immediately');connectionMonitor.receive('pong');advance(20000);ok(pings===2&&timeouts===0,'A responsive connection is rechecked after twenty seconds');advance(10000);ok(timeouts===1&&scheduled.size===0,'A silent open socket times out once and leaves no timer');connectionMonitor.receive('pong');advance(60000);ok(timeouts===1&&scheduled.size===0,'A late pong cannot revive an abandoned monitor');const stoppedMonitor=monitorSocket({send:()=>pings++},()=>timeouts++,fakeClock);stoppedMonitor.stop();advance(60000);ok(timeouts===1&&scheduled.size===0,'Closing a session cancels its heartbeat');const failedMonitor=monitorSocket({send:()=>{throw Error('closed')}},()=>timeouts++,fakeClock);failedMonitor.stop();ok(timeouts===2&&scheduled.size===0,'A socket send failure triggers recovery without leaking a timer');
 const retentionNow=Date.UTC(2026,9,24);ok(roomExpiryAt({complete:false,lastActiveAt:retentionNow},retentionNow)===retentionNow+ABANDONED_ROOM_TTL_MS&&ABANDONED_ROOM_TTL_MS===7*24*60*60*1000,'Abandoned rooms expire seven days after their last activity');
 ok(roomExpiryAt({complete:true,lastActiveAt:retentionNow},retentionNow)===retentionNow+COMPLETED_ROOM_TTL_MS&&COMPLETED_ROOM_TTL_MS===24*60*60*1000,'Completed rooms expire one day after their last activity');
 ok(workerSource.includes('async alarm()')&&workerSource.includes('storage.deleteAll()')&&sqlLabSource.includes("storage.delete('budget')"),'Room expiry removes game state and the room-specific SQL budget');
@@ -173,6 +177,16 @@ await act(no,n,{type:'verify',extension:'204'});await read(no,n,'case-settings',
 await act(no,n,{type:'submit',puzzle:'social',answers:{capability:'board_owner',need:'unnecessary'}});
 await act(no,n,{type:'continue'});
 ok(!no.tokenShared&&!no.recovered&&no.stage===4,'Verified no-share route needs no recovery');
+// Full localized journey for every supported party size, alternating who acts.
+for(const language of ['en','ja'])for(let size=1;size<=7;size++){
+ const {state:journey,member:journeyHost}=make(language);for(let i=1;i<size;i++)join(journey,'Journey '+i);await firstTwo(journey,journeyHost);let turn=0;const party=journey.members.map(m=>m.id);const perform=action=>actOnline(journey,journey.members[turn++%size],action,party);const inspect=async(...ids)=>{for(const id of ids)await perform({type:'read',id})};
+ if(size%2===0)await perform({type:'send-code',code:'NEON-4826'});await perform({type:'verify',extension:'204'});if(journey.boardLocked)await perform({type:'recover',choices:['unnecessary_authority','discourages_independent_check']});await inspect('case-settings','security-response');await perform({type:'submit',puzzle:'social',answers:{capability:'board_owner',need:'unnecessary'}});await perform({type:'continue',stage:3});
+ await perform({type:'album'});await inspect('image-details','photo-sequence');await perform({type:'original',asset:'IMG_2841'});await perform({type:'submit',puzzle:'metadata',answers:{capture:'18:43',route:'MNT-44',contents:'unknown'}});await perform({type:'continue',stage:4});
+ await perform({type:'file',path:'../../archive/maintenance/MNT-44.txt'});await perform({type:'controller',controller:'CT-44'});await perform({type:'operations'});await inspect('route-archive','route-ticket','dock-inventory','playlist-history','media-manifest','cue-sheet');await perform({type:'submit',puzzle:'path',answers:{location:'LA-B',source:'REH-1410',departure:'18:42'}});await perform({type:'continue',stage:5});await inspect('review-notice','photo-late','source-revision');
+ for(let chapter=1;chapter<=6;chapter++)for(const [index,beat] of chapterScripts[chapter].entries())if(beat.choice){const key='chapter-'+chapter+':'+index;for(const [i,member] of journey.members.entries())await actOnline(journey,member,{type:'dialogue-vote',key,choice:i%beat.choice.length},party);const decision=journey.dialogueDecisions[key];if(decision.locked===undefined)await actOnline(journey,journeyHost,{type:'dialogue-finalize',key,choice:decision.proposed},party);ok(journey.dialogueDecisions[key].locked!==undefined,language+' '+size+' players resolve chapter '+chapter+' dialogue');}
+ await perform({type:'finale',answers:{culprit:'mio',route:'rear',deception:'recording',motive:'deflect',evidence:['booking-receipts','photo-original','playlist-history','review-notice','photo-late','source-revision']}});ok(journey.complete&&journey.stage===6&&journey.solved.length===5,language+' '+size+' players finish every chapter with alternating actors');
+ for(const member of journey.members){const snapshot=view(journey,member,party);ok(snapshot.complete&&snapshot.members.length===size&&snapshot.receipts.length===5&&!JSON.stringify(snapshot).includes(journeyHost.token),language+' '+size+' players receive a complete personalized final snapshot');}
+}
 const normal=await queryFixtures('trolley'),attack=await queryFixtures("' OR 1=1 -- "),alt=await queryFixtures("' OR 'x'='x' -- "),mutate=await queryFixtures("'; DROP TABLE reservations; -- ");
 ok(normal.rows.length===0&&attack.rows.length===5&&alt.rows.length===5&&mutate.error,'Separate SQLite challenge evaluates real SQL');
 const forbidden=await queryFixtures("' OR (SELECT 1)=1 -- "), arithmetic=await queryFixtures("' OR 2>1 -- " );
@@ -393,6 +407,7 @@ ok(!unread.includes('presentation'),'Snapshot does not leak future evidence tabl
  assert.equal(response.status,200,JSON.stringify(executed));ok(executed.sql.rows.length===5,'Worker calls separate SQLite challenge Durable Object');
  const wsResponse=await mf.dispatchFetch(`http://neon.test/api/rooms/${code}/ws`,{headers:{Upgrade:'websocket','Sec-WebSocket-Protocol':'neon, '+joined.token}});
  assert.equal(wsResponse.status,101);checks++;const ws=wsResponse.webSocket;ws.accept();
+ const pong=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Heartbeat did not receive pong')),5000);const listener=event=>{if(event.data==='pong'){clearTimeout(timer);ws.removeEventListener('message',listener);resolve()}};ws.addEventListener('message',listener)});ws.send('ping');await pong;checks++;
  const update=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('No WebSocket update')),5000);ws.addEventListener('message',event=>{const msg=JSON.parse(event.data);if(msg.snapshot?.board?.notes?.some(n=>n.text==='Synchronized finding')){clearTimeout(timer);resolve(msg);}});});
  await post(`/api/rooms/${code}/action`,{type:'note',text:'Synchronized finding'},key);const synced=await update;
  ok(synced.snapshot.me===joined.snapshot.me,'WebSocket update is personalised and synchronizes another screen');

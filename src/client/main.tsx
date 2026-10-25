@@ -6,6 +6,7 @@ import {SystemChrome} from './hotel-system';
 import {StructuredEvidence} from './evidence';
 import type {EvidencePresentation} from '../shared/evidence';
 import {SupportPhone,PhoneDesk} from './phone';
+import {monitorSocket} from './connection';
 import {recordCategory} from './visuals';
 import {nextStory,dialogueRecordKind} from './story';
 import {ScenePlayer,WorldScene,type SceneKind} from './narrative';
@@ -109,7 +110,7 @@ function App(){
  const liveSession=useRef(session);liveSession.current=session;const liveSnapshot=useRef(snap);liveSnapshot.current=snap;
  const apply=(s:Snapshot)=>{if(s.revision>=revision.current){revision.current=s.revision;setSnap(s)}};
  async function request(url:string,payload?:unknown,token?:string){
-  const response=await fetch(url,{method:payload===undefined?'GET':'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},...(payload!==undefined?{body:JSON.stringify(payload)}:{})});
+  const response=await fetch(url,{signal:AbortSignal.timeout(20000),method:payload===undefined?'GET':'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},...(payload!==undefined?{body:JSON.stringify(payload)}:{})});
   const result=await response.json() as {error?:string;snapshot:Snapshot;token:string;record?:Doc;sql?:unknown;message?:string};if(!response.ok)throw new Error(result.error||'request');return result;
  }
  async function action(type:string,data:Record<string,unknown>={},displayRecord=true){
@@ -123,7 +124,7 @@ function App(){
    const code=joinCode.normalize('NFKC').trim().toUpperCase();
    const r=mode==='join'&&resume?.code===code?{...(await request(`/api/rooms/${code}/snapshot`,undefined,resume.token)),token:resume.token}:await request(mode==='create'?'/api/create':`/api/rooms/${code}/join`,mode==='create'?{name,language:locale}:{name});
    const s={code:r.snapshot.code,token:r.token};localStorage.setItem('neon-session',JSON.stringify(s));revision.current=0;setResume(s);setSession(s);apply(r.snapshot);
-  }catch(e){const key=(e as Error).message;setError(errors[key]?.[l==='ja'?1:0]||t('Could not connect. Run the local Worker or check the room code.','接続できません。ローカルWorkerの起動またはルームコードを確認してください。'));}finally{setBusy(false);}
+  }catch(e){const key=(e as Error).message;if(key==='session'||key==='room_not_found'){setResume(null);localStorage.removeItem('neon-session')}setError(errors[key]?.[l==='ja'?1:0]||t('Could not connect. Run the local Worker or check the room code.','接続できません。ローカルWorkerの起動またはルームコードを確認してください。'));}finally{setBusy(false);}
  }
  useEffect(()=>{document.documentElement.lang=l},[l]);
  useEffect(()=>{setAnswers({});setDrawer(false);setDoc(null);setSql(null);setActiveTool('scene')},[snap?.stage,session?.code]);
@@ -147,13 +148,15 @@ function App(){
  },[snap?.started,snap?.stage,snap?.pending,snap?.complete,snap?.solved.length,snap?.me,session?.code,tutorial,scene,pinsOpen,historyOpen,partyOpen,placesOpen,chatOpen,hintOpen,phoneActive,imageOpen]);
  const finishTutorial=()=>{seenStories.current.add('tutorial');setTutorial(false);try{if(snap&&session){localStorage.setItem('neon-tutorial:'+session.code+':'+snap.me,'seen');if(!localStorage.getItem('neon-story:'+session.code+':'+snap.me))setScene({kind:'opening'});}}catch{setScene({kind:'opening'})}};
  useEffect(()=>{
-  if(!session)return;let stopped=false,ws:WebSocket|undefined,timer:ReturnType<typeof setTimeout>|undefined;
-  request(`/api/rooms/${session.code}/snapshot`,undefined,session.token).then(r=>{if(!stopped)apply(r.snapshot)}).catch(e=>{if(stopped)return;if(e.message==='session'){stopped=true;ws?.close();localStorage.removeItem('neon-session');setResume(null);setSession(null);setSnap(null);setDoc(null);revision.current=0;}setError('Session unavailable. Return to reception to join again. / セッションを確認できません。受付から再参加してください。')});
+  if(!session)return;let stopped=false,ws:WebSocket|undefined,timer:ReturnType<typeof setTimeout>|undefined,monitor:ReturnType<typeof monitorSocket>|undefined;
+  const refresh=()=>request(`/api/rooms/${session.code}/snapshot`,undefined,session.token).then(r=>{if(!stopped)apply(r.snapshot)}).catch(e=>{if(stopped)return;if(e.message==='session'||e.message==='room_not_found'){stopped=true;monitor?.stop();clearTimeout(timer);ws?.close();liveSession.current=null;localStorage.removeItem('neon-session');setResume(null);setSession(null);setSnap(null);setDoc(null);setBusy(false);setConnected(false);revision.current=0;}setError('Session unavailable. Return to reception to join again. / セッションを確認できません。受付から再参加してください。')});
+  void refresh();
   const connect=()=>{
+   if(stopped)return;
    ws=new WebSocket(`${location.protocol==='https:'?'wss':'ws'}://${location.host}/api/rooms/${session.code}/ws`,['neon',session.token]);
-   ws.onopen=()=>{if(!stopped)setConnected(true)};ws.onmessage=e=>{if(stopped||e.data==='pong')return;try{const r=JSON.parse(e.data);if(r.snapshot)apply(r.snapshot)}catch{}};
-   ws.onclose=event=>{if(stopped)return;setConnected(false);if(event.code===1008){stopped=true;localStorage.removeItem('neon-session');setResume(null);setSession(null);setSnap(null);setDoc(null);revision.current=0;setError('This seat was removed. / この参加枠は削除されました。');return;}timer=setTimeout(connect,2000)};ws.onerror=()=>ws?.close();
-  };connect();return()=>{stopped=true;clearTimeout(timer);ws?.close()};
+   const socket=ws;ws.onopen=()=>{if(stopped)return;setConnected(true);monitor?.stop();monitor=monitorSocket(socket,()=>{setConnected(false);socket.close(4000,'Heartbeat timeout')})};ws.onmessage=e=>{if(stopped)return;monitor?.receive(e.data);if(e.data==='pong')return;try{const r=JSON.parse(e.data);if(r.snapshot)apply(r.snapshot)}catch{}};
+   ws.onclose=event=>{monitor?.stop();if(stopped)return;setConnected(false);if(event.code===1008){stopped=true;liveSession.current=null;localStorage.removeItem('neon-session');setResume(null);setSession(null);setSnap(null);setDoc(null);setBusy(false);revision.current=0;setError('This seat was removed. / この参加枠は削除されました。');return;}void refresh();timer=setTimeout(connect,2000)};ws.onerror=()=>socket.close();
+  };const wake=()=>{if(document.visibilityState==='visible')monitor?.check()};document.addEventListener('visibilitychange',wake);connect();return()=>{stopped=true;monitor?.stop();clearTimeout(timer);document.removeEventListener('visibilitychange',wake);ws?.close()};
  },[session?.code,session?.token]);
  
  const field=(key:string,label:string,placeholder='')=><label className="field" key={key}><span>{label}</span><input value={answers[key]||''} onChange={e=>setAnswers({...answers,[key]:e.target.value})} placeholder={placeholder}/></label>;
