@@ -157,3 +157,7 @@ Conversation overlays use one explicit `minmax(0,1fr)` grid column with stretche
 ### v0.20 — deduction feedback and holiday finale
 
 Failed actions now show a persistent, dismissible flash above game overlays. Incorrect final suspects trigger a room-wide counter-argument event: each player reads at their own pace, existing answers and evidence remain intact, and a teammate can submit a revised theory. Correct suspects with an unsupported explanation still receive deduction feedback. A new illustrated hot-spring dinner CG accompanies the bilingual epilogue celebration and the completed case retains a team-name celebration panel with replay access.
+
+### v0.20.1 — multiplayer feedback fixes
+
+Outdated deduction responses no longer interrupt a teammate’s chapter clear or completed case. Shared progress clears obsolete error/accusation messages. Escape dismisses an error flash without closing the scene beneath it.

@@ -32,6 +32,8 @@ const workerSource=await readFile('src/server/worker.ts','utf8');
 const sqlLabSource=await readFile('src/server/sql-lab.ts','utf8');
 await build({entryPoints:['src/client/connection.ts'],outfile:'.test/connection.mjs',bundle:true,platform:'node',format:'esm',logLevel:'silent'});
 const {monitorSocket}=await import('../.test/connection.mjs?'+Date.now());
+await build({entryPoints:['src/client/finding-response.ts'],outfile:'.test/finding-response.mjs',bundle:true,platform:'node',format:'esm',logLevel:'silent'});
+const {findingResolved}=await import('../.test/finding-response.mjs?'+Date.now());
 await build({entryPoints:['src/server/retention.ts'],outfile:'.test/retention.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {ABANDONED_ROOM_TTL_MS,COMPLETED_ROOM_TTL_MS,roomExpiryAt}=await import('../.test/retention.mjs?'+Date.now());
 await build({entryPoints:['src/server/sql-client.ts'],outfile:'.test/sql-client.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
@@ -492,6 +494,9 @@ ok(!unread.includes('presentation'),'Snapshot does not leak future evidence tabl
  const allCounters=Promise.all(sevenSockets.map(socket=>new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(Error('Missing shared accusation')),5000);const listener=event=>{if(event.data==='pong')return;const data=JSON.parse(event.data);if(data.snapshot?.accusation?.culprit==='aya'){clearTimeout(timeout);socket.removeEventListener('message',listener);resolve(data.snapshot)}};socket.addEventListener('message',listener)})));
  const rejectedTheory=await (await sevenPost(sevenPeers[2],{type:'finale',answers:{culprit:'aya',route:'rear',deception:'recording',motive:'deflect'}})).json();const counterSnapshots=await allCounters;ok(counterSnapshots.length===7&&counterSnapshots.every(s=>s.accusation.seq===1&&!s.complete)&&rejectedTheory.snapshot.stage===6,'All seven real WebSockets receive the same failed accusation without completing the case');
  const success=await (await sevenPost(sevenPeers[0],{type:'finale',answers:{culprit:'mio',route:'rear',deception:'recording',motive:'deflect',evidence:['booking-receipts','photo-original','playlist-history','review-notice','photo-late','source-revision']}})).json();ok(success.snapshot.complete&&success.snapshot.records.some(r=>r.id==='ending'),'A different player can correct the theory and unlock the celebration');
+
+ const afterCompletion=await Promise.all(seven.slice(1).map(client=>sevenPost(client,{type:'finale',answers:{culprit:'ren'}}).then(r=>r.json())));
+ ok(afterCompletion.every(r=>r.snapshot.complete&&r.record?.id==='reveal'&&r.snapshot.accusation.seq===1),'Concurrent stale wrong guesses after success return the existing reveal without triggering new accusations');
  const removed=sevenPeers[5];await sevenPost(sevenHost,{type:'remove-member',id:removed.snapshot.me});ok((await sevenPost(removed,{type:'note',text:'Should fail'})).status===401,'Removing a connected seat immediately revokes concurrent action access');
  for(const socket of sevenSockets)socket.close();
  // A host absent before any other connection must not strand the lobby.
@@ -508,6 +513,16 @@ ok(!unread.includes('presentation'),'Snapshot does not leak future evidence tabl
  assert.equal(oversized.status,400);ok((await oversized.json()).error==='size','Streamed bodies are byte-limited without Content-Length');
  const unicode=await post(`/api/rooms/${code}/action`,{type:'note',text:'猫'.repeat(3000)},key);assert.equal(unicode.status,400);checks++;
  ws.close();
+// Late findings must not overwrite a teammate's newer shared success.
+for(const type of ['submit','finale']){
+ ok(findingResolved(type,6,{stage:6,pending:false,complete:true}),'Late '+type+' feedback is suppressed after room completion');
+ ok(!findingResolved(type,6,{stage:6,pending:false,complete:false}),'An unresolved '+type+' still shows its own validation feedback');
+}
+ok(findingResolved('submit',3,{stage:3,pending:true,complete:false}),'A teammate solving the current chapter suppresses a delayed rejection');
+ok(findingResolved('submit',3,{stage:4,pending:false,complete:false}),'Delayed finding feedback cannot interrupt the next chapter');
+ok(!findingResolved('pin',3,{stage:6,pending:false,complete:true}),'Ordinary evidence actions retain their normal error handling after completion');
+ok(!findingResolved('finale',6,null),'A missing snapshot does not mask a real request error');
+
 // Failed final theories are persistent room events, with no progression or evidence loss.
 for(const language of ['en','ja']){
  const {state:challenged,member:lead}=make(language);const peer=join(challenged,'Counter witness');challenged.stage=6;challenged.started=true;
@@ -529,5 +544,5 @@ ok(mainSource.includes('deduction-flash')&&mainSource.includes('aria-live="asser
 
 }finally{await mf.dispose();}
 
-const report={checks_passed:checks,date:new Date().toISOString(),scope:'Persistent error flashes, bilingual suspect counter-arguments synchronized across seven real WebSockets with teammate retry and completion, hot-spring celebration and preserved repair restriction; guided task questions and automatic finale evidence, bilingual code reference and visual PIP evidence, keyword-gated KUMA discovery and simulated index search with real shared WebSocket unlock, engine, chapter-organized Casebook and current leads, revised mystery causality and six-part finale evidence, five-theme security recap, room-code retention and cleanup, shared evidence pinning and durable private-clue sharing, room-wide majority dialogue decisions with pending-player display and Host override, explicit witness follow-ups, isolated Cloudflare workerd/SQLite Durable Object and WebSocket synchronization; including real separate challenge SQLite and containment checks; not a browser or blind playtest',limits:['Desktop isolated UI fixture tested; full production Worker/browser end-to-end not tested','Not deployed to a Cloudflare account','No measured play duration','Mobile browser QA remains unverified']};
+const report={checks_passed:checks,date:new Date().toISOString(),scope:'Stale finding-response regression checks across chapter and completion boundaries, concurrent seven-client post-completion retries, persistent error flashes, bilingual suspect counter-arguments synchronized across seven real WebSockets with teammate retry and completion, hot-spring celebration and preserved repair restriction; guided task questions and automatic finale evidence, bilingual code reference and visual PIP evidence, keyword-gated KUMA discovery and simulated index search with real shared WebSocket unlock, engine, chapter-organized Casebook and current leads, revised mystery causality and six-part finale evidence, five-theme security recap, room-code retention and cleanup, shared evidence pinning and durable private-clue sharing, room-wide majority dialogue decisions with pending-player display and Host override, explicit witness follow-ups, isolated Cloudflare workerd/SQLite Durable Object and WebSocket synchronization; including real separate challenge SQLite and containment checks; not a browser or blind playtest',limits:['Desktop isolated UI fixture tested; full production Worker/browser end-to-end not tested','Not deployed to a Cloudflare account','No measured play duration','Mobile browser QA remains unverified']};
 await writeFile('test-report.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
