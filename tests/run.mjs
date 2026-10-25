@@ -142,6 +142,7 @@ await act(s,other,{type:'verify',extension:'204'});
 await rejects(()=>act(s,m,{type:'recover',choices:['booking_proves_identity','badge_is_independent']}),'recovery');
 await act(s,other,{type:'recover',choices:['unnecessary_authority','discourages_independent_check']});
 ok(!s.boardLocked&&s.recovered&&s.notes[0].text==='Retain this before penalty.','Recovery retains board and all progress');
+await act(s,m,{type:'recover',choices:['unnecessary_authority','discourages_independent_check']});ok(!s.boardLocked&&s.recovered,'Another player can retry recovery after a teammate already restored access');
 await rejects(()=>act(s,m,{type:'send-code',code:'NEON-4826'}),'stale_request');
 await read(s,m,'case-settings','security-response');
 await act(s,m,{type:'submit',puzzle:'social',answers:{capability:'board_owner',need:'unnecessary'}});
@@ -183,6 +184,8 @@ const {state:race,member:racer}=make();await act(race,racer,{type:'start'});awai
 const raceAnswers={booking:'EQ-1842',pass:'SP-62',conclusion:'credential_only'};const firstSubmit=await act(race,racer,{type:'submit',puzzle:'sql',answers:raceAnswers});const secondSubmit=await act(race,racer,{type:'submit',puzzle:'sql',answers:raceAnswers});
 ok(firstSubmit.message===secondSubmit.message&&race.solved.length===1,'Duplicate synchronized puzzle submission is idempotent');
 await act(race,racer,{type:'continue',stage:1});const staleContinue=await act(race,racer,{type:'continue',stage:1});ok(race.stage===2&&!!staleContinue.message,'A slower client can retry chapter advance without an error');
+const lateSubmit=await act(race,racer,{type:'submit',puzzle:'sql',answers:raceAnswers});ok(lateSubmit.message===firstSubmit.message&&race.stage===2&&!race.pending&&race.solved.length===1,'A delayed solved-puzzle submission remains idempotent after chapter advance');
+await act(race,racer,{type:'discover-private',trigger:'tour-spa'});const beforeRestart=JSON.stringify({cards:racer.cards,notices:racer.notices,discoveries:race.privateDiscoveries});await act(race,racer,{type:'start'});ok(race.stage===2&&JSON.stringify({cards:racer.cards,notices:racer.notices,discoveries:race.privateDiscoveries})===beforeRestart,'A repeated Start request preserves chapter and private discovery progress');
 
 // Regression checks for independent review findings.
 const {state:bounded,member:owner}=make();const guest=join(bounded,'Guest');
@@ -217,6 +220,7 @@ const recipient=progressive.members.find(x=>x.id===progressive.privateDiscoverie
 ok(!!recipientView.privateDiscovery&&!observerView.cards.some(card=>card.id===recipientView.privateDiscovery.id),'Only the selected player receives that discovery');
 ok(observerView.privateEvent.name===recipient.name&&!JSON.stringify(observerView).includes(recipientView.privateDiscovery.text),'Other players receive a social prompt without the secret detail');
 await act(progressive,recipient,{type:'ack-private',id:recipientView.privateDiscovery.id});ok(view(progressive,recipient).privateDiscovery===null&&view(progressive,recipient).cards.length===1,'Acknowledging keeps the observation but closes its RPG reveal');
+await act(progressive,recipient,{type:'ack-private',id:recipientView.privateDiscovery.id});ok(view(progressive,recipient).cards.length===1&&view(progressive,recipient).privateDiscovery===null,'Retrying a private acknowledgement keeps the owned card without error');
 await rejects(()=>act(progressive,p1,{type:'discover-private',trigger:'stage-cue'}),'private_trigger');
 
 // UI guidance must follow actual evidence gates without supplying answers.

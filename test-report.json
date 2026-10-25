@@ -1,6 +1,6 @@
 {
-  "checks_passed": 349,
-  "date": "2026-10-25T00:41:04.583Z",
+  "checks_passed": 353,
+  "date": "2026-10-25T00:52:33.788Z",
   "scope": "Engine, chapter-organized Casebook and current leads, revised mystery causality and six-part finale evidence, five-theme security recap, room-code retention and cleanup, shared evidence pinning and durable private-clue sharing, room-wide majority dialogue decisions with pending-player display and Host override, explicit witness follow-ups, isolated Cloudflare workerd/SQLite Durable Object and WebSocket synchronization; including real separate challenge SQLite and containment checks; not a browser or blind playtest",
   "limits": [
     "Desktop isolated UI fixture tested; full production Worker/browser end-to-end not tested",

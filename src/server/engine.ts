@@ -89,12 +89,12 @@ export async function act(s:State,m:Member,a:Record<string,unknown>,services:Ser
  switch(type){
  case 'language':requireThat(s.host===m.id&&!s.started,'host_lobby');requireThat(a.language==='en'||a.language==='ja','language');s.language=a.language as Lang;break;
  case 'start':{
-  requireThat(s.host===m.id&&!s.started,'host_lobby');s.started=true;
+  requireThat(s.host===m.id,'host_lobby');if(s.started)break;s.started=true;
   s.members.forEach(x=>{x.cards=[];x.notices=[]});s.privateDiscoveries=[];s.sharedCards=[];break;
  }
  case 'read':{const id=text(a.id,80);result.record=record(s,id);const trigger=recordPrivateTriggers[id];if(trigger)discoverPrivate(s,m,trigger,services.online,false);break;}
  case 'discover-private':requireThat(a.trigger==='tour-spa','private_trigger');discoverPrivate(s,m,'tour-spa',services.online);break;
- case 'ack-private':{const card=content.private_cards.findIndex(c=>c.id===a.id);requireThat(card>=0&&(m.notices||[]).includes(card),'private_notice');m.notices=(m.notices||[]).filter(i=>i!==card);break;}
+ case 'ack-private':{const card=content.private_cards.findIndex(c=>c.id===a.id);requireThat(card>=0&&m.cards.includes(card),'private_notice');m.notices=(m.notices||[]).filter(i=>i!==card);break;}
  case 'lookup':{
   const key=norm(a.ref);const map:Record<string,string>={'TK-204':'kuma-summary','K-12':'kitchen-note','S-9':'source-supplement','SYS-1':'source-policy','SAF-17':'safety-report','ACK-17':'safety-replies','REV-2':'review-notice','REG-7':'session-register'};
   const id=map[key];requireThat(id,'not_found');unlock(s,[id]);result.record=record(s,id);break;
@@ -117,6 +117,7 @@ export async function act(s:State,m:Member,a:Record<string,unknown>,services:Ser
   requireThat(norm(a.code)==='NEON-4826','code');s.tokenShared=true;s.boardLocked=true;unlock(s,['board-locked']);result.record=record(s,'board-locked');break;
  }
  case 'recover':{
+  if(s.recovered&&!s.boardLocked)break;
   requireThat(s.tokenShared&&s.boardLocked&&s.verified,'verify_first');
   const choices=Array.isArray(a.choices)?a.choices:[];
   requireThat(choices.length===2&&choices.includes('unnecessary_authority')&&choices.includes('discourages_independent_check'),'recovery');
@@ -154,7 +155,7 @@ export async function act(s:State,m:Member,a:Record<string,unknown>,services:Ser
   const key=text(a.key,80);const choice=Number(a.choice),count=dialogueChoiceCounts[key];requireThat(s.host===m.id,'host_lobby');requireThat(Number.isInteger(choice)&&count!==undefined&&choice>=0&&choice<count&&dialogueAvailable(s,key),'dialogue_vote');const decision=decisionFor(s,key,m,services.online);reconcileDialogues(s,services.online);requireThat(decision.locked===undefined&&decision.proposed!==undefined,'dialogue_vote');if(choice!==decision.proposed)decision.override=choice;decision.locked=choice;break;
  }
  case 'submit':{
-  const id=text(a.puzzle);const p=puzzles[s.stage-1];if(p&&id===p.id&&s.pending&&s.solved.includes(id)){result.message=p.flag;break;}requireThat(p&&id===p.id&&!s.pending,'stage');
+  const id=text(a.puzzle);const p=puzzles[s.stage-1];const solved=puzzles.find(p=>p.id===id&&s.solved.includes(id));if(solved){result.message=solved.flag;break;}requireThat(p&&id===p.id&&!s.pending,'stage');
   const v=(a.answers||{}) as Record<string,unknown>;
   if(id==='sql'){
    requireThat(s.sqlRevealed,'run_query');needsRead(s,['booking-receipts','dock-log','asset-card']);
