@@ -1,6 +1,15 @@
-# Hotel NEON — anime mystery prototype v0.17
+# Hotel NEON — anime mystery prototype v0.18
 
 A local multiplayer investigation for 1–7 players. Host is a player; one English/Japanese language per room; no countdown. The story targets about 90 minutes but has not been timed in a blind playtest. Not deployed.
+
+## v0.18 Casebook organization
+
+- The Casebook opens on Current leads, showing only inspected records connected to the active chapter.
+- The complete Records archive is grouped into collapsible chapter sections, with the current chapter opened first.
+- The in-world Notebook also separates the current chapter, case briefing, earlier records, additional files and the resolution instead of showing one undifferentiated stack.
+- Each source has a short evidence summary plus NEW, READ and PINNED status. Story scenes, character profiles and witness dialogue no longer clutter the source-record archive.
+- Replay is now a clearly named section. On small screens, the five Casebook tabs scroll horizontally instead of compressing into unreadable labels.
+- The Evidence board remains the team's curated shortlist, while the Casebook remains the complete inspected-source archive.
 
 ## v0.17 story and security revision
 

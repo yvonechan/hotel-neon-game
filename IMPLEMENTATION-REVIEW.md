@@ -19,6 +19,10 @@ Both reviewers rechecked their reported corrections in the actual source and rep
 
 `test-report.json` records runtime checks executed by the implementer, including actual isolated Cloudflare workerd requests, durable SQLite storage and WebSocket synchronization/hibernation/host transfer.
 
+## v0.18 Casebook organization
+
+The Casebook no longer presents every opened item as one flat stream. It opens on records relevant to the current chapter, marks records newly filed since the player's previous Casebook visit and gives every source a short reminder of what it establishes. The full source archive is grouped into collapsible chapter sections with read and pin state visible. Narrative scenes and character dialogue remain in People or Replay instead of appearing as evidence records. The in-world Notebook separately labels current, briefing, earlier, additional and resolution material. The five-section navigation becomes horizontally scrollable on narrow screens.
+
 ## v0.2 independent-review fixes
 - Card sharing is idempotent while its note is retained; all note writes cap the board at150 entries.
 - Host can remove seats in lobby or during the game, revoking tokens and moving optional observations to the host.
