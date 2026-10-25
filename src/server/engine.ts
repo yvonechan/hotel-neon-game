@@ -106,7 +106,13 @@ export async function act(s:State,m:Member,a:Record<string,unknown>,services:Ser
  }
  case 'sources':unlock(s,chapters[2]);result.record=record(s,'kuma-summary');break;
  case 'verify':{
-  requireThat(norm(a.extension)==='204','desk');
+  const extension=norm(a.extension);const smallTalk:Record<string,{en:string;ja:string}>={
+   '210':{en:'Aya, Kitchen: “If this is about PIP, I said rice cooker. It was a metaphor, not a project proposal.”\n“Today’s specials are pudding and interruptions. Only one is complimentary.”\n“For case verification, use the security contact in the staff directory. I can authenticate a custard, not a support agent.”',ja:'アヤ・厨房：「PIPの件？ 炊飯器にするとは言いましたけど、比喩です。開発依頼ではありません。」\n「本日のおすすめはプリンと割り込みです。無料なのは片方だけ。」\n「案件の本人確認は、職員連絡先の警備窓口へ。カスタードの品質は保証できますが、サポート担当者の身元までは。」'},
+   '100':{en:'Reception: “Your holiday is still booked. Unfortunately, so is this incident.”\n“For case verification, please use the security contact in the staff directory. We do not transfer investigations on the strength of a very official-looking font.”',ja:'受付：「休暇のご予約は有効です。残念ながら、事件もチェックインしてしまいました。」\n「案件の確認は、職員連絡先の警備窓口へ。いかにも公式なフォントだけで、調査の引き継ぎはできません。」'},
+   '330':{en:'Daichi, Maintenance: “Have you tried turning your holiday off and on again? No? Sensible. Please do not touch the breaker.”\n“I handle doors and lifts. Case verification belongs with the security contact in your staff directory.”',ja:'ダイチ・設備：「休暇を再起動してみましたか？ まだ？ 賢明です。ブレーカーには触らないでください。」\n「担当は扉とリフトです。案件の確認は、職員連絡先の警備窓口へお願いします。」'}
+  };
+  if(smallTalk[extension]){result.message=smallTalk[extension][s.language];break;}
+  if(extension!=='204'){result.message=s.language==='ja'?'ホテル自動案内：「その内線は見つかりませんでした。ロボットが出なくても、誘拐の証拠にはなりません。職員連絡先の番号をご確認ください。」':'Hotel switchboard: “That extension was not found. A robot failing to answer is not, by itself, evidence of kidnapping. Please check the staff directory.”';break;}
   if(!s.unlocked.includes('support-request')){result.message=s.language==='ja'?'現在、照合対象のサポート依頼は届いていません。':'There is no received support request to verify yet.';break;}
   s.verified=true;unlock(s,['security-response','tablet-lending','session-register','album-index']);result.record=record(s,'security-response');break;
  }

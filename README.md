@@ -4,6 +4,8 @@ A local multiplayer investigation for 1–7 players. Host is a player; one Engli
 
 ## v0.18 Casebook organization
 
+Support conversation attachments now show a localized badge and case screenshot, with a click-to-enlarge viewer and keyboard dismissal. Asking for proof resends the images. Kitchen, reception and maintenance calls have humorous localized dialogue; unlisted extensions receive a switchboard response. Only the trusted case-support extension verifies the request or unlocks evidence.
+
 Portrait and ticket correction: expression sprites use an inner clipping frame to exclude adjacent atlas artwork. EQ-1842 opens its own localized receipt and source text; the SQL search table continues to show all returned bookings for comparison.
 
 Connection and journey validation: heartbeat checks detect silent sockets, expired or removed sessions clear Resume credentials, and HTTP requests time out instead of waiting indefinitely. The suite completes all chapters in English and Japanese for every party size from one to seven, rotating actors and testing both support-request outcomes. Socket heartbeat timing also runs against a controlled clock and the actual Worker.

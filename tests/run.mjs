@@ -19,6 +19,8 @@ const {characterFor,environmentFor,atlasPosition,expressionPosition,staffExpress
 await build({entryPoints:['src/client/phone.tsx'],outfile:'.test/phone.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {conversationLines,SupportPhone,PhoneDesk}=await import('../.test/phone.mjs?'+Date.now());
 const phoneSource=await readFile('src/client/phone.tsx','utf8');
+await build({entryPoints:['src/client/support-attachments.tsx'],outfile:'.test/support-attachments.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
+const {SupportAttachments,supportAttachment}=await import('../.test/support-attachments.mjs');
 await build({entryPoints:['src/client/intro.ts'],outfile:'.test/intro.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {hotelTourStops}=await import('../.test/intro.mjs?'+Date.now());
 const mainSource=await readFile('src/client/main.tsx','utf8');
@@ -68,6 +70,12 @@ async function firstTwo(s,m){
  await act(s,m,{type:'continue'});
 }
 const {state:s,member:m}=make();
+for(const language of ['en','ja']){
+ const {state:callRoom,member:caller}=make(language);await act(callRoom,caller,{type:'start'});
+ for(const extension of ['210','100','330','999']){const before=JSON.stringify({verified:callRoom.verified,unlocked:callRoom.unlocked,stage:callRoom.stage});const response=await act(callRoom,caller,{type:'verify',extension});ok(typeof response.message==='string'&&response.message.length>40&&!response.record&&JSON.stringify({verified:callRoom.verified,unlocked:callRoom.unlocked,stage:callRoom.stage})===before,language+' desk '+extension+' answers without verifying the case or revealing evidence');}
+ const attachments=renderToStaticMarkup(React.createElement(SupportAttachments,{lang:language}));ok((attachments.match(/<img /g)||[]).length===2&&attachments.includes('data:image/svg+xml'),'Support conversation has two actual image attachments in '+language);
+ for(const kind of ['badge','case']){const attachment=supportAttachment(kind,language);const svg=decodeURIComponent(attachment.src.split(',').slice(1).join(','));ok(svg.includes('<svg')&&svg.includes(kind==='badge'?'HN-IS-019':'EQ-1842')&&!svg.includes('NEON-4826')&&!svg.includes('SP-62'),language+' attachment '+kind+' contains the claimed document without leaking private codes');}
+}
 const {state:named}=make();join(named,'Alice');assert.throws(()=>join(named,'ＡＬＩＣＥ'),e=>e.code==='name_taken');checks++;
 for(let i=1;i<7;i++)join(s,'Detective '+i);
 assert.throws(()=>join(s,'Eighth'),e=>e.code==='full');checks++;

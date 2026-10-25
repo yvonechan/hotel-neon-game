@@ -62,6 +62,7 @@
 @media(max-width:650px){.observation-ping{top:76px}}
 
 /* v0.18 — organize the Casebook around the current investigation. */
+.support-attachments{width:100%;max-width:100%;color:#dce8df}.support-attachments>small{display:block;font-size:11px;margin-bottom:9px}.support-attachments>div:not(.support-attachment-viewer){display:grid;grid-template-columns:1fr 1fr;gap:9px}.support-attachments>div>button{min-width:0;display:flex;flex-direction:column;gap:8px;text-align:left;padding:8px;background:#263f49;border-color:#78988f}.support-attachments button img{display:block;width:100%;height:auto;border-radius:5px}.support-attachments button span{font-size:11px;line-height:1.5}.support-attachments button small{font-size:10px;color:#b3d8cb}.support-attachment-viewer{position:fixed;inset:0;z-index:160;background:#081823f5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:22px}.support-attachment-viewer>button{align-self:flex-end;padding:12px 18px}.support-attachment-viewer>img{width:min(100%,1000px);max-height:75dvh;object-fit:contain}.support-attachment-viewer>p{font-size:13px;color:#e4ecdf;margin:0}
 /* Generated atlas artwork crosses cell edges: keep a safe inner frame at every expression. */
 .expression-atlas,.staff-expression-atlas{clip-path:inset(3% 8% 4% 8%)}
 .casebook-tabs{grid-template-columns:repeat(5,1fr)}
