@@ -1,5 +1,15 @@
 # Prototype implementation review
 
+## v0.19 clarity and discovery pass
+
+All task questions were checked against the displayed records and answer fields. Submission now shows task instructions, source shortcuts and explicit answer formats. The final case review attaches inspected evidence automatically while preserving the six server evidence gates. The dock log now explicitly records a cradle load-sensor removal at 18:42, rather than treating a disconnected charger as conclusive movement evidence.
+
+The clue presentation audit is recorded in `CLUE-DISPLAY-REVIEW.md`. A hotel code reference and explicit inventory location column distinguish LA-B, B-03 and CT-44. PIP's camera image is separated from wired serial identification. Settings display the actual board-transfer capability; recovery uses numbered steps.
+
+KUMA's document tray is a room-shared scripted discovery through the repeatable honey-toast conversation. The false account remains until discovery; direct source requests do not bypass it. This is a narrative gate, not a real LLM security control. The simulated file-index grep searches a bounded in-memory catalogue, returns paths without reading files, and requires players to calculate a relative viewer path. The optional final hint remains an explicit solution aid.
+
+Every revealed source is available through grouped map records. Private observations and undiscovered puzzle documents retain their intended discovery rules. The production browser and mobile user interface still require visual/manual QA.
+
 The story v2 was previously reviewed independently for narrative, security, gameplay and bilingual equivalence. This prototype also received bounded read-only reviews from the security and gameplay reviewers. They did not run a browser or a human playtest.
 
 Concrete issues found and corrected:

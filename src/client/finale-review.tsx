@@ -1,0 +1,19 @@
+import React from 'react';
+import type {Lang,Destination} from './rpg';
+export const finaleReviewGroups=[
+ {question:['When was PIP removed from its charging dock?','PIPが充電台から降ろされたのはいつ？'],sources:['dock-log','booking-receipts'],tool:'operations'},
+ {question:['Which route did the trolley take, and where did PIP end up?','台車はどこを通り、PIPはどこへ運ばれた？'],sources:['photo-original','route-ticket','route-archive','dock-inventory'],tool:'operations'},
+ {question:['What was the ballroom screen actually playing at 18:55?','18:55、宴会場の画面で実際に再生されていたのは？'],sources:['media-manifest','playlist-history','cue-sheet'],tool:'media'},
+ {question:['Why would someone want to disguise the reason for cancelling the show?','ショーの中止理由をすり替えたい事情は何だった？'],sources:['safety-replies','review-notice'],tool:'case'},
+ {question:['Which records connect a person to the event tablet and session?','イベント端末とセッションを人物に結び付ける記録は？'],sources:['session-register','tablet-lending','photo-late'],tool:'operations'},
+ {question:['How did someone try to mislead or obstruct your investigation?','誰かが捜査を惑わせたり妨げたりした方法は？'],sources:['security-response','source-revision'],tool:'concierge'}
+];
+type RecordView={id:string;title:string;tool:string;read:boolean};
+export const inspectedEvidence=(records:RecordView[])=>records.filter(r=>r.read).map(r=>r.id);
+const taskSources:Record<number,string[]>={1:['search-help','dock-log','asset-card','booking-receipts','location-guide'],2:['source-supplement','source-policy','kuma-summary','safety-report','kitchen-note'],3:['support-request','case-settings','directory','security-response'],4:['image-details','photo-sequence','photo-original','location-guide'],5:['service-index','route-archive','route-ticket','dock-inventory','pip-snapshot','playlist-history','media-manifest','dock-log','location-guide']};
+export function TaskSources({stage,records,lang,onGo}:{stage:number;records:RecordView[];lang:Lang;onGo:(d:Destination)=>void}){const t=(en:string,ja:string)=>lang==='ja'?ja:en;const sources=(taskSources[stage]||[]).flatMap(id=>records.filter(r=>r.id===id));return <details className="task-source-guide"><summary>{t('Sources for these questions','この質問に使う資料')} · {sources.length}</summary><div>{sources.map(r=><button type="button" key={r.id} onClick={()=>onGo({tool:r.tool,record:r.id})}>{r.read?'✓':'▤'} {r.title} ↗</button>)}</div></details>}
+export const reviewComplete=(records:RecordView[])=>finaleReviewGroups.every(group=>group.sources.some(id=>records.some(r=>r.id===id&&r.read)));
+export function FinaleReview({records,lang,onGo}:{records:RecordView[];lang:Lang;onGo:(d:Destination)=>void}){
+ const t=(en:string,ja:string)=>lang==='ja'?ja:en;
+ return <section className="finale-evidence-review"><h3>{t('Review the case together','チームで事件を振り返ろう')}</h3><p>{t('Open at least one source for each question below. Inspected records are attached automatically—you do not need to select or classify evidence. Then answer the four deduction questions.','下の各質問について、資料を少なくとも1つ確認してください。確認済み資料は自動添付されます。証拠を選択・分類する必要はありません。その後、4つの推理に答えましょう。')}</p>{finaleReviewGroups.map((group,i)=>{const sources=records.filter(r=>group.sources.includes(r.id));const done=sources.some(r=>r.read);return <details className={'review-question '+(done?'reviewed':'')} key={i} open={!done}><summary><span>{done?'✓':i+1}</span><b>{group.question[lang==='ja'?1:0]}</b><small>{done?t('Source inspected','資料確認済み'):t('Review a source','資料を確認')}</small></summary><div>{sources.map(record=><button type="button" key={record.id} onClick={()=>onGo({tool:record.tool,record:record.id})}><span>{record.read?'✓':'▤'}</span>{record.title}<small>{t('Open →','開く →')}</small></button>)}{!sources.length&&<button type="button" onClick={()=>onGo({tool:group.tool})}>{t('Find related records →','関連する資料を探す →')}</button>}</div></details>})}</section>;
+}

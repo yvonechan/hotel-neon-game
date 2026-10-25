@@ -1,6 +1,20 @@
-# Hotel NEON — anime mystery prototype v0.18
+# Hotel NEON — anime mystery prototype v0.19
 
 A local multiplayer investigation for 1–7 players. Host is a player; one English/Japanese language per room; no countdown. The story targets about 90 minutes but has not been timed in a blind playtest. Not deployed.
+
+## v0.19 clearer questions and visual evidence
+
+- Reception's repeatable honey-toast conversation opens KUMA's document tray for the room. Before discovery, ordinary source/ID requests retain its false account. This is a scripted story event, not an LLM security mechanism.
+- A simulated grep searches only fictional filenames/index keywords. The public tree no longer reveals the archive storage path, and players calculate a relative path from search results. The final optional hint can still supply the solution.
+- All revealed records are grouped on the map independently of the quest log. Private observations and undiscovered puzzle documents remain gated by their intended discovery rules.
+- Workspace settings now separate the handover code from its actual authority; recovery help has numbered steps and clearly states what remains accessible.
+
+- Reviewed all clue formats; see `CLUE-DISPLAY-REVIEW.md` for the full audit.
+- Finale evidence is attached automatically through a six-question guided review. Players no longer classify a long checklist themselves.
+- Every task shows source links and concrete questions; the 18:42 cradle-removal event is explicit.
+- PIP's dock report now separates an illustrated camera snapshot, wired serial readings, stored status and the manager's recovery response.
+- Added a permanent hotel places/code reference. The dock inventory explicitly separates LA-B (building location), B-03 (dock point) and CT-44 (controller).
+- Policies, A/B/C instructions, settings and correspondence use labelled report sections; existing logs and manifests retain tables.
 
 ## v0.18 Casebook organization
 

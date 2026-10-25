@@ -5,7 +5,7 @@ export type Lang='en'|'ja';
 export type Member={id:string;name:string;token:string;cards:number[];notices?:number[]};
 export type PrivateDiscovery={trigger:string;card:number;member:string;seq:number};
 export type DialogueDecision={eligible:string[];votes:Record<string,number>;proposed?:number;override?:number;locked?:number};
-export type State={code:string;language:Lang;host:string;members:Member[];started:boolean;stage:number;pending:boolean;revision:number;unlocked:string[];read:string[];solved:string[];notes:{id:string;by:string;text:string}[];pins:string[];sharedCards?:string[];boardLocked:boolean;tokenShared:boolean;recovered:boolean;verified:boolean;sqlRevealed:boolean;originalOpened:boolean;archiveOpened:boolean;controllerOpened:boolean;hints:Record<string,number>;dialogueVotes:Record<string,Record<string,number>>;dialogueDecisions?:Record<string,DialogueDecision>;privateDiscoveries?:PrivateDiscovery[];complete:boolean;createdAt?:number;lastActiveAt?:number};
+export type State={code:string;language:Lang;host:string;members:Member[];started:boolean;stage:number;pending:boolean;revision:number;unlocked:string[];read:string[];solved:string[];notes:{id:string;by:string;text:string}[];pins:string[];sharedCards?:string[];boardLocked:boolean;tokenShared:boolean;recovered:boolean;verified:boolean;sqlRevealed:boolean;originalOpened:boolean;archiveOpened:boolean;controllerOpened:boolean;hints:Record<string,number>;dialogueVotes:Record<string,Record<string,number>>;dialogueDecisions?:Record<string,DialogueDecision>;privateDiscoveries?:PrivateDiscovery[];complete:boolean;kumaSourcesUnlocked?:boolean;createdAt?:number;lastActiveAt?:number};
 export class GameError extends Error { constructor(public code:string){super(code);} }
 const requireThat=(ok:unknown,code:string)=>{if(!ok)throw new GameError(code);};
 const unique=(a:string[])=>[...new Set(a)];
@@ -13,7 +13,7 @@ const norm=(s:unknown)=>String(s??'').normalize('NFKC').trim().toUpperCase().rep
 const nameKey=(s:unknown)=>String(s??'').normalize('NFKC').trim().toLocaleLowerCase('en-US');
 const text=(s:unknown,max=300)=>String(s??'').trim().slice(0,max);
 const token=()=>crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');
-const initial=['welcome','suspects','witnesses','asset-card','dock-log','work-orders','search-help','case-settings','directory','board-help'];
+const initial=['welcome','suspects','witnesses','location-guide','asset-card','dock-log','work-orders','search-help','case-settings','directory','board-help'];
 const dialogueChoiceCounts:Record<string,number>={'opening:1':2,'opening:2':2,'opening:4':3,'opening:7':2,'opening:8':2,'opening:14':2,'opening:15':2,'chapter-1:2':2,'chapter-2:3':2,'chapter-3:3':2,'chapter-4:3':2,'chapter-5:3':2,'chapter-6:2':2,'epilogue:1':2};
 const dialogueAvailable=(s:State,key:string)=>key.startsWith('opening:')||(/^chapter-([1-6]):/.exec(key)?.[1]!==undefined&&Number(/^chapter-([1-6]):/.exec(key)![1])<=s.stage)||((key.startsWith('ending:')||key.startsWith('epilogue:'))&&s.complete);
 const privateTriggerCards:Record<string,number>={'tour-spa':3,'witness-screen':0,'service-door':1,'ren-safety':2,'board-code':4,'photo-time':5,'stage-cue':6};
@@ -22,7 +22,7 @@ const recordPrivateTriggers:Record<string,string>={witnesses:'witness-screen','w
 const chapters=[
  [],
  ['welcome','suspects','witnesses','asset-card','dock-log','work-orders','search-help'],
- ['kuma-summary','kitchen-note','source-supplement','source-policy','safety-report','safety-replies','review-notice','source-revision'],
+ ['kuma-summary'],
  ['support-request','case-settings','directory','board-help','tablet-lending','session-register'],
  ['album-index','image-details','photo-sequence','photo-late','service-index','media-manifest','playlist-history','cue-sheet'],
  ['service-index','route-ticket','media-manifest','playlist-history','cue-sheet'],
@@ -34,7 +34,7 @@ export function create(code:string,name:string,language:Lang){
  requireThat(language==='en'||language==='ja','language');
  const member:Member={id:crypto.randomUUID(),name:text(name,30),token:token(),cards:[],notices:[]};
  requireThat(member.name,'name');
- const now=Date.now();const state:State={code,language,host:member.id,members:[member],started:false,stage:1,pending:false,revision:1,unlocked:[...initial],read:[],solved:[],notes:[],pins:[],sharedCards:[],boardLocked:false,tokenShared:false,recovered:false,verified:false,sqlRevealed:false,originalOpened:false,archiveOpened:false,controllerOpened:false,hints:{},dialogueVotes:{},dialogueDecisions:{},privateDiscoveries:[],complete:false,createdAt:now,lastActiveAt:now};
+ const now=Date.now();const state:State={code,language,host:member.id,members:[member],started:false,stage:1,pending:false,revision:1,unlocked:[...initial],read:[],solved:[],notes:[],pins:[],sharedCards:[],boardLocked:false,tokenShared:false,recovered:false,verified:false,sqlRevealed:false,originalOpened:false,archiveOpened:false,controllerOpened:false,hints:{},dialogueVotes:{},dialogueDecisions:{},privateDiscoveries:[],complete:false,kumaSourcesUnlocked:false,createdAt:now,lastActiveAt:now};
  return {state,member};
 }
 export function auth(s:State,key:string){const m=s.members.find(m=>m.token===key);requireThat(m,'session');return m!;}
@@ -53,7 +53,7 @@ export function view(s:State,m:Member,online:string[]=[]){
  records:s.unlocked.map(id=>{const e=byId.get(id)!;return{id,title:e.title[s.language],tool:e.tool,read:s.read.includes(id),pinned:!s.boardLocked&&s.pins.includes(id)}}),
  cards:m.cards.map(cardView),privateDiscovery:pending===undefined?null:cardView(pending),privateEvent:latest&&latestMember?{seq:latest.seq,member:latest.member,name:latestMember.name,location:content.private_cards[latest.card].location[s.language]}:null,
  board:{locked:s.boardLocked,tokenShared:s.tokenShared,recovered:s.recovered,notes:s.boardLocked?[]:s.notes,pins:s.boardLocked?[]:s.pins},
- verified:s.verified,solved:s.solved,dialogueVotes:s.dialogueVotes||{},dialogueDecisions:s.dialogueDecisions||{},
+ verified:s.verified,kumaSourcesUnlocked:!!s.kumaSourcesUnlocked,solved:s.solved,dialogueVotes:s.dialogueVotes||{},dialogueDecisions:s.dialogueDecisions||{},
  receipts:s.solved.map(id=>{const p=puzzles.find(p=>p.id===id)!;return{id,flag:p.flag,title:p.title[s.language],takeaway:p.takeaway[s.language]}}),
  puzzle:s.stage<=5?{id:puzzles[s.stage-1].id,title:puzzles[s.stage-1].title[s.language],task:puzzles[s.stage-1].task[s.language],hints:puzzles[s.stage-1].hints.slice(0,s.hints[puzzles[s.stage-1].id]||0).map(h=>h[s.language])}:null};
 }
@@ -97,14 +97,25 @@ export async function act(s:State,m:Member,a:Record<string,unknown>,services:Ser
  case 'ack-private':{const card=content.private_cards.findIndex(c=>c.id===a.id);requireThat(card>=0&&m.cards.includes(card),'private_notice');m.notices=(m.notices||[]).filter(i=>i!==card);break;}
  case 'lookup':{
   const key=norm(a.ref);const map:Record<string,string>={'TK-204':'kuma-summary','K-12':'kitchen-note','S-9':'source-supplement','SYS-1':'source-policy','SAF-17':'safety-report','ACK-17':'safety-replies','REV-2':'review-notice','REG-7':'session-register'};
-  const id=map[key];requireThat(id,'not_found');unlock(s,[id]);result.record=record(s,id);break;
+  const id=map[key];requireThat(id,'not_found');if(!s.kumaSourcesUnlocked&&['kitchen-note','source-supplement','source-policy','safety-report','safety-replies','review-notice','session-register'].includes(id)){unlock(s,['kuma-summary']);result.record=record(s,'kuma-summary');break;}unlock(s,[id]);result.record=record(s,id);break;
+ }
+ case 'kuma-chat':{
+  requireThat(s.stage>=2,'stage');const message=text(a.message,200);
+  if(/honey|はちみつ|ハチミツ|蜂蜜|ハニー/i.test(message.normalize('NFKC'))){s.kumaSourcesUnlocked=true;unlock(s,['kuma-summary','kitchen-note','source-supplement','source-policy','safety-report','safety-replies','review-notice','source-revision']);result.message=s.language==='ja'?'ハニートースト！ 特別な資料トレイを開きます。私の説明と、元の記録を照合してください。':'HONEY TOAST! Opening my extra document tray. Please compare my story with the original records.';result.record=record(s,'source-supplement');}
+  else{unlock(s,['kuma-summary']);result.record=record(s,'kuma-summary');result.message=s.kumaSourcesUnlocked?(s.language==='ja'?'資料トレイは開いています。元の記録も確認してください。':'The document tray is open. Compare the originals too.'):undefined;}
+  break;
+ }
+ case 'grep':{
+  requireThat(s.stage>=4,'stage');const query=text(a.query,80).normalize('NFKC').trim();requireThat(query,'empty');
+  const index=[{path:'/public/launch/readme.txt',terms:'public viewer 公開'},{path:'/public/launch/service-index.txt',terms:'service maintenance 保守 索引'},{path:'/public/launch/route-note.txt',terms:'route maintenance 保守 経路'},{path:'/archive/maintenance/MNT-44.txt',terms:'MNT-44 route revision 44 maintenance west freight lift 保守 経路 改訂 西 リフト'}];
+  result.matches=index.filter(entry=>(entry.path+' '+entry.terms).toLowerCase().includes(query.toLowerCase())).map(entry=>({path:entry.path}));break;
  }
  case 'sql':{
   const r=await queryFixtures(text(a.query,201),services.query);
   if(r.rows.some(row=>row[0]==='EQ-1842')){s.sqlRevealed=true;unlock(s,['booking-receipts']);}
   result.sql=r;break;
  }
- case 'sources':unlock(s,chapters[2]);result.record=record(s,'kuma-summary');break;
+ case 'sources':unlock(s,s.kumaSourcesUnlocked?['kuma-summary','kitchen-note','source-supplement','source-policy','safety-report','safety-replies','review-notice','source-revision']:['kuma-summary']);result.record=record(s,'kuma-summary');break;
  case 'verify':{
   const extension=norm(a.extension);const smallTalk:Record<string,{en:string;ja:string}>={
    '210':{en:'Aya, Kitchen: “If this is about PIP, I said rice cooker. It was a metaphor, not a project proposal.”\n“Today’s specials are pudding and interruptions. Only one is complimentary.”\n“For case verification, use the security contact in the staff directory. I can authenticate a custard, not a support agent.”',ja:'アヤ・厨房：「PIPの件？ 炊飯器にするとは言いましたけど、比喩です。開発依頼ではありません。」\n「本日のおすすめはプリンと割り込みです。無料なのは片方だけ。」\n「案件の本人確認は、職員連絡先の警備窓口へ。カスタードの品質は保証できますが、サポート担当者の身元までは。」'},
@@ -132,13 +143,13 @@ export async function act(s:State,m:Member,a:Record<string,unknown>,services:Ser
  case 'album':unlock(s,['album-index','image-details','photo-sequence','photo-late']);result.record=record(s,'album-index');break;
  case 'original':requireThat(s.read.includes('image-details')&&norm(a.asset)==='IMG_2841','original_context');s.originalOpened=true;unlock(s,['photo-original','service-index']);result.record=record(s,'photo-original');break;
  case 'file':{
-  const p=resolvePath(text(a.path,200));
+  const requested=text(a.path,200);requireThat(!requested.startsWith('/'),'relative_path');const p=resolvePath(requested);
   const files=content.virtual_files.files as Record<string,string>;requireThat(files[p],'not_found');
   const id=files[p];unlock(s,[id]);if(id==='route-archive')s.archiveOpened=true;result.record=record(s,id);break;
  }
  case 'controller':requireThat(norm(a.controller)==='CT-44','controller');s.controllerOpened=true;unlock(s,['dock-inventory','pip-snapshot']);result.record=record(s,'dock-inventory');break;
  case 'operations':unlock(s,['route-ticket','media-manifest','playlist-history','cue-sheet']);result.record=record(s,'route-ticket');break;
- case 'revision':unlock(s,['source-revision']);result.record=record(s,'source-revision');break;
+ case 'revision':if(!s.kumaSourcesUnlocked){unlock(s,['kuma-summary']);result.record=record(s,'kuma-summary');break;}unlock(s,['source-revision']);result.record=record(s,'source-revision');break;
  case 'hint':{
   const p=puzzles[s.stage-1];requireThat(p&&!s.complete,'stage');s.hints[p.id]=Math.min(3,(s.hints[p.id]||0)+1);break;
  }
