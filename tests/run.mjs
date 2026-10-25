@@ -393,6 +393,8 @@ const original=renderToStaticMarkup(React.createElement(EvidenceImageViewer,{kin
 ok(!posted.includes('MNT-44')&&original.includes('MNT-44'),'Posted zoom does not disclose retained-original placard');
 ok(posted.includes('role="dialog"')&&posted.includes('type="range"'),'Image enlargement has a separate accessible zoom viewer');
 const presentation=await act(s,m,{type:'read',id:'dock-log'});
+const ticket=await act(s,m,{type:'read',id:'booking-receipts'});ok(ticket.record.title.includes('EQ-1842')&&ticket.record.presentation.rows.length===1&&ticket.record.presentation.rows[0][0]==='EQ-1842'&&!/EQ-1820|EQ-1841|EQ-1844|EQ-1905/.test(ticket.record.body),'Opening EQ-1842 returns only its own receipt, including the original source text');
+for(const language of ['en','ja']){const receipt=content.evidence.find(e=>e.id==='booking-receipts');ok(receipt.presentation.rows[language].length===1&&receipt.presentation.rows[language][0][0]==='EQ-1842'&&!/EQ-1820|EQ-1841|EQ-1844|EQ-1905/.test(receipt.body[language]),'Individual ticket stays scoped to EQ-1842 in '+language);}
 ok(presentation.record.presentation.kind==='table'&&presentation.record.presentation.rows.length===4,'Authorized evidence read delivers structured log rows');
 const privateRoom=make();const unread=JSON.stringify(view(privateRoom.state,privateRoom.member));
 ok(!unread.includes('presentation'),'Snapshot does not leak future evidence tables');

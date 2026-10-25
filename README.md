@@ -4,6 +4,8 @@ A local multiplayer investigation for 1–7 players. Host is a player; one Engli
 
 ## v0.18 Casebook organization
 
+Portrait and ticket correction: expression sprites use an inner clipping frame to exclude adjacent atlas artwork. EQ-1842 opens its own localized receipt and source text; the SQL search table continues to show all returned bookings for comparison.
+
 Connection and journey validation: heartbeat checks detect silent sockets, expired or removed sessions clear Resume credentials, and HTTP requests time out instead of waiting indefinitely. The suite completes all chapters in English and Japanese for every party size from one to seven, rotating actors and testing both support-request outcomes. Socket heartbeat timing also runs against a controlled clock and the actual Worker.
 
 Delayed-request regression pass: repeated Start, private acknowledgement and completed recovery are safe to retry. Solved puzzle submissions remain safe after another player advances the chapter. The client ignores action responses and socket events from abandoned sessions and suppresses old-chapter record displays after synchronized progression.

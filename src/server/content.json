@@ -403,12 +403,12 @@
       "chapter": 1,
       "tool": "reservations",
       "title": {
-        "en": "Completed reservation receipts",
-        "ja": "完了済み予約の受領票"
+        "en": "EQ-1842 — reservation receipt",
+        "ja": "EQ-1842 — 予約受領票"
       },
       "body": {
-        "en": "EQ-1820: T-07, rear service entrance → west freight-lift handoff, collected 18:12. Pass SP-51. Completed.\nEQ-1841: T-02 heated food trolley, kitchen → ballroom, collected 18:41. Pass KT-11.\nEQ-1842: created 18:25. T-07 covered service trolley, rear service entrance → west freight-lift handoff, collected 18:42. Pass SP-62. Request: inspection transfer. Cost centre: shared EVENTS. No named collector on receipt.\nEQ-1844: T-09 covered service trolley, rear service entrance → audiovisual store, collected 18:44. Pass SP-64.\nEQ-1905: projector, ballroom → audiovisual store, collection 19:05.\nThe lift handoff ticket has not been attached to these receipts. Service complaint TK-204 is linked on EQ-1842.",
-        "ja": "EQ-1820：T-07、裏側サービス入口→西側荷物用エレベーター受渡場所。18:12受取。SP-51。完了。\nEQ-1841：保温台車T-02、厨房→宴会場。18:41受取。KT-11。\nEQ-1842：18:25作成。カバー付き業務用台車T-07、裏側サービス入口→西側荷物用エレベーター受渡場所。18:42受取。SP-62。用途：点検搬送。費用部門：共通EVENTS。受領票に個人名なし。\nEQ-1844：カバー付き業務用台車T-09、裏側サービス入口→映像機材庫。18:44受取。SP-64。\nEQ-1905：プロジェクター、宴会場→映像機材庫。19:05回収。\n荷物用エレベーターの受渡票は未添付。EQ-1842には作業苦情TK-204へのリンクあり。"
+        "en": "EQ-1842: created 18:25. T-07 covered service trolley, rear service entrance → west freight-lift handoff, collected 18:42. Pass SP-62. Request: inspection transfer. Cost centre: shared EVENTS. No named collector on receipt.\nThe lift handoff ticket has not been attached to this receipt. Service complaint TK-204 is linked on EQ-1842.",
+        "ja": "EQ-1842：18:25作成。カバー付き業務用台車T-07、裏側サービス入口→西側荷物用エレベーター受渡場所。18:42受取。SP-62。用途：点検搬送。費用部門：共通EVENTS。受領票に個人名なし。\n荷物用エレベーターの受渡票は未添付。EQ-1842には作業苦情TK-204へのリンクあり。"
       },
       "links": [
         "kuma-summary"
@@ -436,63 +436,15 @@
         "rows": {
           "en": [
             [
-              "EQ-1820",
-              "T-07",
-              "Rear entrance → west lift",
-              "18:12",
-              "SP-51",
-              "Completed"
-            ],
-            [
-              "EQ-1841",
-              "T-02 heated trolley",
-              "Kitchen → ballroom",
-              "18:41",
-              "KT-11",
-              "—"
-            ],
-            [
               "EQ-1842",
               "T-07 covered trolley",
               "Rear entrance → west lift",
               "18:42",
               "SP-62",
               "Created18:25; inspection transfer; shared EVENTS; no named collector"
-            ],
-            [
-              "EQ-1844",
-              "T-09 covered trolley",
-              "Rear entrance → AV store",
-              "18:44",
-              "SP-64",
-              "—"
-            ],
-            [
-              "EQ-1905",
-              "Projector",
-              "Ballroom → AV store",
-              "19:05",
-              "—",
-              "—"
             ]
           ],
           "ja": [
-            [
-              "EQ-1820",
-              "T-07",
-              "裏口 → 西荷物用リフト",
-              "18:12",
-              "SP-51",
-              "完了"
-            ],
-            [
-              "EQ-1841",
-              "T-02 保温台車",
-              "厨房 → 宴会場",
-              "18:41",
-              "KT-11",
-              "—"
-            ],
             [
               "EQ-1842",
               "T-07 カバー付き台車",
@@ -500,22 +452,6 @@
               "18:42",
               "SP-62",
               "作成18:25／点検搬送／共用EVENTS／受取人名なし"
-            ],
-            [
-              "EQ-1844",
-              "T-09 カバー付き台車",
-              "裏口 → AV倉庫",
-              "18:44",
-              "SP-64",
-              "—"
-            ],
-            [
-              "EQ-1905",
-              "プロジェクター",
-              "宴会場 → AV倉庫",
-              "19:05",
-              "—",
-              "—"
             ]
           ]
         },
