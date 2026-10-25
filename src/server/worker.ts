@@ -35,7 +35,7 @@ export class GameRoom extends DurableObject<Env>{
     const protocols=(req.headers.get('Sec-WebSocket-Protocol')||'').split(',').map(x=>x.trim());
     const m=auth(this.state,protocols[1]||'');const pair=new WebSocketPair();
     this.ctx.acceptWebSocket(pair[1],[m.id]);pair[1].serializeAttachment({id:m.id});
-    await this.locked(async()=>{this.ensureHost();await this.persist();return json({ok:true})});this.push();return new Response(null,{status:101,webSocket:pair[0],headers:{'Sec-WebSocket-Protocol':'neon'}});
+    await this.locked(async()=>{this.ensureHost();if(reconcileDialogues(this.state!,this.online()))this.state!.revision++;await this.persist();return json({ok:true})});this.push();return new Response(null,{status:101,webSocket:pair[0],headers:{'Sec-WebSocket-Protocol':'neon'}});
    }
    return await this.locked(async()=>{
     const s=this.state!;const path=new URL(req.url).pathname;
@@ -54,7 +54,7 @@ export class GameRoom extends DurableObject<Env>{
  async webSocketMessage(ws:WebSocket,message:string|ArrayBuffer){if(message==='ping')ws.send('pong');}
  async webSocketClose(ws:WebSocket,code:number,reason:string){
   try{ws.close([1005,1006,1015].includes(code)?1000:code,reason)}catch{}if(!this.state)return;
-  const active=this.online(ws);await this.locked(async()=>{let changed=false;if(!active.includes(this.state!.host)&&active.length){this.state!.host=active[0];changed=true}if(reconcileDialogues(this.state!,active))changed=true;if(changed)this.state!.revision++;await this.persist();return json({ok:true})});this.push();
+  await this.locked(async()=>{const active=this.online(ws);let changed=false;if(!active.includes(this.state!.host)&&active.length){this.state!.host=active[0];changed=true}if(reconcileDialogues(this.state!,active))changed=true;if(changed)this.state!.revision++;await this.persist();return json({ok:true})});this.push();
  }
  async webSocketError(ws:WebSocket){try{ws.close(1011,'Connection interrupted')}catch{}}
  async alarm(){if(!this.state)return;const now=Date.now();if(this.online().length){await this.persist();return}const expires=roomExpiryAt(this.state,now);if(now<expires){await this.ctx.storage.setAlarm(expires);return}const code=this.state.code;try{await this.env.SQL_LABS?.get(this.env.SQL_LABS.idFromName(code)).cleanup()}catch{}this.state=undefined;await this.ctx.storage.deleteAlarm();await this.ctx.storage.deleteAll();}

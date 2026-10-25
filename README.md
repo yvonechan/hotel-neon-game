@@ -4,6 +4,8 @@ A local multiplayer investigation for 1–7 players. Host is a player; one Engli
 
 ## v0.18 Casebook organization
 
+Multiplayer regression pass: delayed prior-chapter advances no longer skip a newly completed chapter. Reconnecting eligible voters invalidate incomplete proposals; ballots survive replacement Hosts without an eligible vote. Late spectators receive an explanation instead of an enabled invalid vote button. Runtime tests exercise seven concurrent connected clients, pins, notes, votes, multi-tab Host presence and removal authorization.
+
 - The Casebook opens on Current leads, showing only inspected records connected to the active chapter.
 - The complete Records archive is grouped into collapsible chapter sections, with the current chapter opened first.
 - The in-world Notebook also separates the current chapter, case briefing, earlier records, additional files and the resolution instead of showing one undifferentiated stack.
