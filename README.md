@@ -4,6 +4,8 @@ A local multiplayer investigation for 1–7 players. Host is a player; one Engli
 
 ## v0.18 Casebook organization
 
+IMG_2860 now includes a cast-matched event-desk illustration with zoom/pan and an English/Japanese character key. The caption preserves the photograph's evidentiary limit: it identifies people and EVT-01, but does not reveal tablet screen contents.
+
 Support conversation attachments now show a localized badge and case screenshot, with a click-to-enlarge viewer and keyboard dismissal. Asking for proof resends the images. Kitchen, reception and maintenance calls have humorous localized dialogue; unlisted extensions receive a switchboard response. Only the trusted case-support extension verifies the request or unlocks evidence.
 
 Portrait and ticket correction: expression sprites use an inner clipping frame to exclude adjacent atlas artwork. EQ-1842 opens its own localized receipt and source text; the SQL search table continues to show all returned bookings for comparison.

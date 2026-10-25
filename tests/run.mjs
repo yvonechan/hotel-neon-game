@@ -396,6 +396,8 @@ for(const language of ['en','ja']){
 }
 await build({entryPoints:['src/client/image-viewer.tsx'],outfile:'.test/image-viewer.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {EvidenceImageViewer}=await import('../.test/image-viewer.mjs');
+for(const language of ['en','ja']){const eventPhoto=renderToStaticMarkup(React.createElement(EvidenceImageViewer,{kind:'event',lang:language,onClose(){}}));ok(eventPhoto.includes('event-desk-photo.webp')&&eventPhoto.includes('IMG_2860')&&!eventPhoto.includes('corridor-original.png')&&!eventPhoto.includes('MNT-44'),'Event-desk viewer uses its own image and does not carry corridor evidence overlays in '+language);}
+const eventAsset=await readFile('public/art/event-desk-photo.webp');ok(eventAsset.toString('ascii',0,4)==='RIFF'&&eventAsset.toString('ascii',8,12)==='WEBP','Event-desk image is packaged as a real WebP asset');
 const posted=renderToStaticMarkup(React.createElement(EvidenceImageViewer,{kind:'posted',lang:'en',onClose:()=>{}}));
 const original=renderToStaticMarkup(React.createElement(EvidenceImageViewer,{kind:'original',lang:'ja',onClose:()=>{}}));
 ok(!posted.includes('MNT-44')&&original.includes('MNT-44'),'Posted zoom does not disclose retained-original placard');
