@@ -1,6 +1,14 @@
-# Hotel NEON — anime mystery prototype v0.16
+# Hotel NEON — anime mystery prototype v0.17
 
 A local multiplayer investigation for 1–7 players. Host is a player; one English/Japanese language per room; no countdown. The story targets about 90 minutes but has not been timed in a blind playtest. Not deployed.
+
+## v0.17 story and security revision
+
+- Mio now has a complete intended endgame: stage an external incident, postpone the unsafe show, recover PIP after the ballroom clears and shift the immediate explanation to Incident Response. Independent records make that plan fail.
+- Ren's manual-mode work, console return and lack of trolley collection are explicit. Aya, Daichi and Sora each have a plausible suspicion that later evidence can eliminate.
+- PIP's stored status and return call back to the team's holiday priority. The final explanation maps all five security themes to the incident without claiming that a technical artefact alone identifies a person.
+- The finale now requires separate support for physical departure, route, false preview, motive, attribution and investigation interference. One-option room votes were removed from the final explanation.
+- Sending the fictional handover code remains a recoverable social-engineering consequence, but the confirmation now clearly warns that one player's action changes board access for the whole room.
 
 ## v0.16 room retention and witness follow-ups
 

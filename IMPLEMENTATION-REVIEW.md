@@ -94,6 +94,13 @@ Dialogue choices can publish bounded per-room votes through the existing authent
 The five main characters and four supporting hotel characters use separate transparent 4-expression atlases. Portrait selection is deterministic from scene context and response state.
 
 
+## v0.17 story and security revision
+
+The culprit's plan now includes the missing endgame: use a supposed external incident to force postponement, recover PIP after the ballroom clears and treat the immediate failure as Incident Response's problem. Ren's narrow role in safe manual preparation is timestamped and separated from collection. Every supporting character has a concrete suspicious circumstance that later evidence can eliminate, and PIP receives an emotional callback in both the stored dock status and epilogue.
+
+The final explanation explicitly distinguishes five security lessons from person attribution. Finale validation now requires six evidence categories—departure, route, false preview, motive, attribution and interference—so broad background records cannot satisfy the deduction. Generated one-option votes were replaced by direct manager questions and team explanations. The recoverable handover-code trap remains available, with a stronger warning that it changes the whole room's board access.
+
+
 ## v0.16 retention and witness interaction
 
 Witness pressing now renders a concrete player question followed by the witness's answer; evidence presentation names the selected record in the question. The flow remains local investigation rather than a room-wide story vote.

@@ -14,7 +14,7 @@ const nameKey=(s:unknown)=>String(s??'').normalize('NFKC').trim().toLocaleLowerC
 const text=(s:unknown,max=300)=>String(s??'').trim().slice(0,max);
 const token=()=>crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');
 const initial=['welcome','suspects','witnesses','asset-card','dock-log','work-orders','search-help','case-settings','directory','board-help'];
-const dialogueChoiceCounts:Record<string,number>={'opening:1':2,'opening:2':2,'opening:4':3,'opening:7':2,'opening:8':2,'opening:14':2,'chapter-1:2':2,'chapter-2:3':2,'chapter-3:3':2,'chapter-4:3':2,'chapter-5:3':2,'chapter-6:2':2,'ending:1':1,'ending:2':1,'ending:3':1,'epilogue:1':2};
+const dialogueChoiceCounts:Record<string,number>={'opening:1':2,'opening:2':2,'opening:4':3,'opening:7':2,'opening:8':2,'opening:14':2,'opening:15':2,'chapter-1:2':2,'chapter-2:3':2,'chapter-3:3':2,'chapter-4:3':2,'chapter-5:3':2,'chapter-6:2':2,'epilogue:1':2};
 const dialogueAvailable=(s:State,key:string)=>key.startsWith('opening:')||(/^chapter-([1-6]):/.exec(key)?.[1]!==undefined&&Number(/^chapter-([1-6]):/.exec(key)![1])<=s.stage)||((key.startsWith('ending:')||key.startsWith('epilogue:'))&&s.complete);
 const privateTriggerCards:Record<string,number>={'tour-spa':3,'witness-screen':0,'service-door':1,'ren-safety':2,'board-code':4,'photo-time':5,'stage-cue':6};
 const privateTriggerStage:Record<string,number>={'tour-spa':1,'witness-screen':1,'service-door':1,'ren-safety':2,'board-code':3,'photo-time':4,'stage-cue':5};

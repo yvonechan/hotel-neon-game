@@ -22,13 +22,13 @@ export function sourceDialogue(body:string,lang:'en'|'ja',speaker:Pair):Beat[]{
 export function explanationBeats(body:string,lang:'en'|'ja'):Beat[]{
  const lines=body.split('\n').filter(Boolean);const out:Beat[]=[b(['Hotel manager','支配人'],['Everyone is here. Walk us through the evidence.','全員そろいました。証拠に沿って、説明をお願いします。'])];
  lines.forEach((line,index)=>{const match=line.match(/^(Mio|Manager|ミオ|支配人)[:：]\s*(.*)$/);const speaker:Pair=match?(match[1]==='Mio'||match[1]==='ミオ'?['Mio','ミオ']:['Hotel manager','支配人']):['Your team','あなたたち'];const text=match?.[2]||line;
- if(index<3&&!match){const questions:Pair[]=[['Who arranged it, and why?','誰が、なぜ事件を仕組んだのでしょう？'],['How did the apparently sealed-room disappearance work?','封印された部屋から、どうやって姿を消したのでしょう？'],['What about the attempts to redirect the investigation?','調査を誘導する動きについては？']];out.push({speaker:['Hotel manager','支配人'],text:questions[index],choice:[{label:[['Present the motive','Reconstruct the movement','Explain the misdirection'][index],['動機を説明する','移動と映像を再構成する','調査への妨害を説明する'][index]],reply:lang==='en'?[text,'']:['',text],speaker}]});}else out.push({speaker,text:lang==='en'?[text,'']:['',text]});});
+ if(index<3&&!match){const questions:Pair[]=[['Who arranged it, and what outcome were they trying to create?','誰が、どんな結末を作ろうとして事件を仕組んだのでしょう？'],['How did the apparently sealed-room disappearance work?','封印された部屋から、どうやって姿を消したのでしょう？'],['What about the attempts to redirect the investigation?','調査を誘導する動きについては？']];out.push({speaker:['Hotel manager','支配人'],text:questions[index]});out.push({speaker,text:lang==='en'?[text,'']:['',text]});}else out.push({speaker,text:lang==='en'?[text,'']:['',text]});});
  return out;
 }
 export function epilogueBeats(body:string,lang:'en'|'ja'):Beat[]{
  const lines=body.split('\n').filter(Boolean);const pair=(line:string):Pair=>lang==='en'?[line,'']:['',line];
  const out:Beat[]=lines.slice(0,1).map(line=>({speaker:['Hotel manager','支配人'],text:pair(line)}));
- out.push({speaker:['PIP','PIP'],face:'pip',text:['YOUR HOLIDAY HAS BEEN RESTORED. WOULD YOU LIKE A COMPLIMENTARY INCIDENT POSTMORTEM?','休暇を復旧しました。無料のインシデント振り返りはいかがですか？'],choice:[{label:['No. Hot spring. Now.','いいえ。今すぐ温泉へ。'],reply:['POSTMORTEM DECLINED. RELAXATION APPROVED.','振り返りを辞退。休暇を承認しました。']},{label:['No. We are officially on holiday.','いいえ。正式に休暇中です。'],reply:['UNDERSTOOD. PRODUCTIVITY SUGGESTIONS REMAIN DISABLED.','承知しました。生産性向上の提案は、引き続き停止します。']}]});
+ out.push({speaker:['PIP','PIP'],face:'pip',text:['YOUR HOLIDAY PRIORITY REMAINS ACTIVE. WOULD YOU LIKE A COMPLIMENTARY INCIDENT POSTMORTEM?','休暇の優先設定は、まだ有効です。無料のインシデント振り返りはいかがですか？'],choice:[{label:['No. Hot spring. Now.','いいえ。今すぐ温泉へ。'],reply:['POSTMORTEM DECLINED. HOT-SPRING PRIORITY RESTORED.','振り返りを辞退。温泉の優先設定を復旧しました。']},{label:['No. We are officially on holiday.','いいえ。正式に休暇中です。'],reply:['UNDERSTOOD. PRODUCTIVITY SUGGESTIONS AND STATUS REPORTS REMAIN DISABLED.','承知しました。生産性向上の提案と進捗報告は、引き続き停止します。']}]});
  // Keep the original denouement, including repair restrictions and the final joke.
  lines.slice(2).forEach(line=>out.push({speaker:['Your team','あなたたち'],text:pair(line)}));return out;
 }

@@ -18,6 +18,7 @@ await build({entryPoints:['src/client/visuals.tsx'],outfile:'.test/visuals.mjs',
 const {characterFor,environmentFor,atlasPosition,expressionPosition,staffExpressionPosition,recordCategory,SpeakerPortrait}=await import('../.test/visuals.mjs?'+Date.now());
 await build({entryPoints:['src/client/phone.tsx'],outfile:'.test/phone.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {conversationLines,SupportPhone,PhoneDesk}=await import('../.test/phone.mjs?'+Date.now());
+const phoneSource=await readFile('src/client/phone.tsx','utf8');
 await build({entryPoints:['src/client/intro.ts'],outfile:'.test/intro.mjs',bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent'});
 const {hotelTourStops}=await import('../.test/intro.mjs?'+Date.now());
 const mainSource=await readFile('src/client/main.tsx','utf8');
@@ -151,10 +152,11 @@ await act(s,m,{type:'submit',puzzle:'path',answers:{location:'LA-B',source:'REH-
 ok(s.pending&&s.stage===5,'A solved chapter waits for explicit shared Continue');
 await act(s,m,{type:'continue'});
 ok(s.stage===6&&s.solved.length===5,'All five findings advance to finale');
-await read(s,m,'review-notice','source-revision');
+await read(s,m,'review-notice','photo-late','source-revision');
 await rejects(()=>act(s,m,{type:'finale',answers:{culprit:'mio',route:'rear',deception:'recording',motive:'deflect',evidence:[]}}),'evidence_groups');
-await act(s,m,{type:'finale',answers:{culprit:'mio',route:'rear',deception:'recording',motive:'deflect',evidence:['photo-original','playlist-history','review-notice','source-revision']}});
-ok(s.complete&&s.unlocked.includes('ending'),'Finale supported by four evidence groups');
+await rejects(()=>act(s,m,{type:'finale',answers:{culprit:'mio',route:'rear',deception:'recording',motive:'deflect',evidence:['asset-card','witnesses','safety-report','security-response']}}),'evidence_groups');
+await act(s,m,{type:'finale',answers:{culprit:'mio',route:'rear',deception:'recording',motive:'deflect',evidence:['booking-receipts','photo-original','playlist-history','review-notice','photo-late','source-revision']}});
+ok(s.complete&&s.unlocked.includes('ending'),'Finale requires evidence for departure, route, false preview, motive, attribution and interference');
 const replayedFinale=await act(s,m,{type:'finale',answers:{}});ok(replayedFinale.record?.id==='reveal'&&s.complete,'Repeated synchronized finale submission returns the existing reveal');
 ok(s.members.reduce((sum,p)=>sum+p.cards.length,0)===7&&s.privateDiscoveries.length===7,'All seven observations are discovered progressively across the case');
 const {state:no,member:n}=make('ja');await firstTwo(no,n);ok(n.cards.length===4,'Solo receives each observation as its location is reached');
@@ -265,11 +267,13 @@ for(const language of ['en','ja']){
 }
 ok(openingBeats.filter(beat=>beat.choice?.length>1).length>=2,'Opening includes multiple conversational choices');
 ok(openingBeats.every(beat=>beat.speaker.length===2&&beat.text.length===2),'Opening is bilingual throughout');
-ok(mainSource.includes('Security themes in this case')&&mainSource.includes('SQL injection · Prompt injection · Path traversal · Social engineering'),'Hint card lists the game’s security themes');
+const {state:openingCoverage,member:openingPlayer}=make();await act(openingCoverage,openingPlayer,{type:'start'});for(const [index,beat] of openingBeats.entries())if(beat.choice)await actOnline(openingCoverage,openingPlayer,{type:'dialogue-vote',key:'opening:'+index,choice:0},[openingPlayer.id]);ok(Object.keys(openingCoverage.dialogueDecisions).length===openingBeats.filter(beat=>beat.choice).length,'Every opening choice has a valid room decision key');
+ok(mainSource.includes('Security themes in this case')&&mainSource.includes('Social engineering · Digital forensics'),'Hint card lists all five security themes');
 const narrativeSource=await readFile('src/client/narrative.tsx','utf8');
 ok(narrativeSource.includes('Waiting for: ')&&narrativeSource.includes('Confirm majority')&&narrativeSource.includes('Waiting for Host confirmation'),'Dialogue UI exposes pending voters and the Host confirmation state');
 ok(narrativeSource.includes('When you say you saw PIP at 18:55')&&narrativeSource.includes('interview-exchange')&&narrativeSource.includes('Does “${r.title}” support what you just said?'),'Witness pressing and evidence presentation render an explicit player question and witness reply');
 ok(mainSource.includes("if(shared)await action('ack-private'")&&mainSource.includes("t('Pinned ✓','ピン留め済み ✓')"),'Evidence UI acknowledges existing pins and only dismisses a discovery after a successful share');
+ok(phoneSource.includes('changes Evidence-board access for the whole room')&&phoneSource.includes('Discuss it with your team'),'Risky social-engineering action warns that one player can affect the whole room');
 ok(replayChoice({host:0,guest:1},'guest')===1,'Replay follows the viewing player’s recorded response');
 ok(replayChoice({host:0,guest:0,third:1},'late-player')===0,'Replay falls back to the room’s recorded majority for a player without a vote');
 ok(replayChoice({},'host')===undefined,'Replay does not invent a response when none was recorded');
@@ -294,12 +298,14 @@ for(let chapter=1;chapter<=5;chapter++)ok(clearScripts[chapter].length>=2&&clear
 for(const language of ['en','ja']){
  const original=content.evidence.find(e=>e.id==='reveal').body[language];const beats=explanationBeats(original,language);const flattened=beats.map(beat=>beat.text.join(' ')+(beat.choice||[]).map(c=>c.reply.join(' ')).join(' ')).join(' ');
  ok(original.split('\n').slice(0,3).every(paragraph=>flattened.includes(paragraph)),'Explanation dialogue preserves all original findings in '+language);
- ok(beats.some(beat=>beat.speaker[0]==='Mio')&&beats.some(beat=>beat.choice?.[0]?.speaker?.[0]==='Your team'),'Final scene includes Mio and player-led explanation');
+ ok(beats.some(beat=>beat.speaker[0]==='Mio')&&beats.filter(beat=>beat.speaker[0]==='Your team').length>=3&&!beats.some(beat=>beat.choice?.length===1),'Final scene is player-led without one-option room votes');
  const epilogue=epilogueBeats(content.evidence.find(e=>e.id==='ending').body[language],language);
  ok(epilogue.some(beat=>beat.face==='pip'&&beat.choice?.length===2),'PIP return has two holiday responses');
  ok(epilogue.at(-1).text[language==='en'?0:1].includes(language==='en'?'Autonomous mode stays disabled':'自律モードは修理まで停止'),'Epilogue preserves repair restriction');
 }
 ok(['support-request','security-response','album-index','board-locked'].every(id=>dialogueRecordKind(id)==='record'),'Story-bearing reports use the conversation player');
+const revealText=content.evidence.find(e=>e.id==='reveal').body.en;ok(revealText.includes('recover PIP after the ballroom cleared')&&revealText.includes('five security lessons')&&revealText.includes('Ren returned the console'),'Reveal explains Mio’s intended endgame, the security chain and Ren’s non-complicity');
+ok(content.finale.evidence_groups.length===6&&content.finale.evidence_groups.every(group=>group.sources.length>=2),'Finale separates six supported claims instead of accepting broad background evidence');
 ok(dialogueRecordKind('dock-log')===null,'Technical evidence remains separately inspectable');
 const holiday=renderToStaticMarkup(React.createElement(WorldScene,{lang:'en',complete:true,onGo(){},onStory(){},onWitnesses(){}}));
 ok(holiday.includes('PIP found. Holiday restored.')&&!holiday.includes('PIP is missing'),'Completed hotel scene no longer claims PIP is missing');
@@ -407,5 +413,5 @@ ok(!unread.includes('presentation'),'Snapshot does not leak future evidence tabl
  const unicode=await post(`/api/rooms/${code}/action`,{type:'note',text:'猫'.repeat(3000)},key);assert.equal(unicode.status,400);checks++;
  ws.close();
 }finally{await mf.dispose();}
-const report={checks_passed:checks,date:new Date().toISOString(),scope:'Engine, room-code retention and cleanup, shared evidence pinning and durable private-clue sharing, progressive private-discovery privacy and balancing, room-wide majority dialogue decisions with pending-player display and Host override, explicit witness follow-ups, localized quest guidance, isolated Cloudflare workerd/SQLite Durable Object and WebSocket synchronization; including real separate challenge SQLite and containment checks; not a browser or blind playtest',limits:['Desktop isolated UI fixture tested; full production Worker/browser end-to-end not tested','Not deployed to a Cloudflare account','No measured play duration','Mobile browser QA remains unverified']};
+const report={checks_passed:checks,date:new Date().toISOString(),scope:'Engine, revised mystery causality and six-part finale evidence, five-theme security recap, room-code retention and cleanup, shared evidence pinning and durable private-clue sharing, room-wide majority dialogue decisions with pending-player display and Host override, explicit witness follow-ups, isolated Cloudflare workerd/SQLite Durable Object and WebSocket synchronization; including real separate challenge SQLite and containment checks; not a browser or blind playtest',limits:['Desktop isolated UI fixture tested; full production Worker/browser end-to-end not tested','Not deployed to a Cloudflare account','No measured play duration','Mobile browser QA remains unverified']};
 await writeFile('test-report.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));

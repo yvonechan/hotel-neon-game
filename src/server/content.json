@@ -81,8 +81,8 @@
         "ja": "五人の関係者と、気になる発言"
       },
       "body": {
-        "en": "Mio, Events Director: “Tonight has to go perfectly.” Carries the event tablet.\nRen, Robotics Engineer: “I have already explained why autonomous mode is a bad idea.”\nAya, Head Chef: “A restaurant review with wheels. Exactly what we needed.”\nDaichi, Maintenance: “I opened a service panel. That is literally my job.”\nSora, Travel Influencer: “Is Staff Only a rule, or more of a mood?”",
-        "ja": "ミオ／イベント責任者：「今夜だけは、絶対に成功させないと。」イベント用タブレットを持つ。\nレン／ロボットエンジニア：「自律モードをやめるべき理由は、もう説明しました。」\nアヤ／料理長：「頼んでもいない料理評論家に、車輪まで付いてるのよ。」\nダイチ／設備担当：「サービスパネルを開けた？それが仕事なんですが。」\nソラ／旅行系インフルエンサー：「関係者以外立入禁止って、雰囲気ですか？」"
+        "en": "Mio, Events Director: “Tonight has to go perfectly.” Her approval is under review, and she still carries event tablet EVT-01.\nRen, Robotics Engineer: “I have already explained why autonomous mode is a bad idea.” He alone prepared PIP for manual transport.\nAya, Head Chef: “A restaurant review with wheels. Exactly what we needed.” Her heated trolley crossed the ballroom route at 18:41.\nDaichi, Maintenance: “I opened the rear service door. That is literally my job.” He knows the freight-lift routes.\nSora, Travel Influencer: “Is Staff Only a rule, or more of a mood?” Her photographs were published later than they were captured.",
+        "ja": "ミオ／イベント責任者：「今夜だけは、絶対に成功させないと。」実施判断は審査対象で、イベント用タブレットEVT-01を持ったまま。\nレン／ロボットエンジニア：「自律モードをやめるべき理由は、もう説明しました。」PIPを手動搬送できる状態にした唯一の人物。\nアヤ／料理長：「頼んでもいない料理評論家に、車輪まで付いてるのよ。」18:41、保温台車で宴会場への経路を通った。\nダイチ／設備担当：「裏のサービス扉を開けた？それが仕事なんですが。」荷物用エレベーターの経路にも詳しい。\nソラ／旅行系インフルエンサー：「関係者以外立入禁止って、雰囲気ですか？」写真の公開時刻は撮影時刻より後だった。"
       },
       "links": []
     },
@@ -287,8 +287,8 @@
         "ja": "設備担当の作業票"
       },
       "body": {
-        "en": "WO-40 — Daichi, 18:10–18:20: adjusted rear service-door closer. Completion signed 18:20. Pass MT-08.\nWO-41 — Ren, 18:38: set PIP to manual transport mode, return console to reception. No trolley collection assigned.\nWO-42 — Events crew: collect equipment after setup. Booking references were retained in completed reservations.\nKitchen job: heated trolley T-02, kitchen to ballroom, 18:41. Aya: “It contains pudding. Please stop asking whether it contains a robot.”",
-        "ja": "WO-40／ダイチ18:10〜18:20：裏側サービス扉のクローザー調整。18:20完了署名。パスMT-08。\nWO-41／レン18:38：PIPを手動サービスモードに変更し、操作端末を受付へ返却。台車の受取担当には指定なし。\nWO-42／イベント係：準備後の機材回収。予約番号は完了済み予約に保存。\n厨房作業：保温台車T-02、厨房→宴会場、18:41。アヤ：「中身はプリンです。ロボットかどうか聞くのはやめて。」"
+        "en": "WO-40 — Daichi, 18:10–18:20: adjusted rear service-door closer. Completion signed 18:20. Pass MT-08.\nWO-41 — Ren, 18:38: at Events' request, set PIP to manual transport mode for a cancellation inspection, then return the console to reception. Event crew would arrange any trolley; no collection was assigned to Ren.\nWO-42 — Events crew: collect equipment after setup. Booking references were retained in completed reservations.\nKitchen job: heated trolley T-02, kitchen to ballroom, 18:41. Aya: “It contains pudding. Please stop asking whether it contains a robot.”",
+        "ja": "WO-40／ダイチ18:10〜18:20：裏側サービス扉のクローザー調整。18:20完了署名。パスMT-08。\nWO-41／レン18:38：イベント係の依頼で、中止時の点検搬送に備えてPIPを手動サービスモードへ変更後、操作端末を受付へ返却。台車はイベント係が手配し、レンには受取作業の割当なし。\nWO-42／イベント係：準備後の機材回収。予約番号は完了済み予約に保存。\n厨房作業：保温台車T-02、厨房→宴会場、18:41。アヤ：「中身はプリンです。ロボットかどうか聞くのはやめて。」"
       },
       "links": [],
       "presentation": {
@@ -322,7 +322,7 @@
               "WO-41",
               "Ren",
               "18:38",
-              "Manual mode; return console; no trolley collection assigned",
+              "Events cancellation inspection; manual mode; console returned; no collection assigned to Ren",
               "—"
             ],
             [
@@ -352,7 +352,7 @@
               "WO-41",
               "レン",
               "18:38",
-              "手動モード設定／端末返却／台車受取の担当ではない",
+              "イベント係の中止点検依頼／手動モード／端末返却／レンに受取割当なし",
               "—"
             ],
             [
@@ -698,8 +698,8 @@
         "ja": "ACK-17／実施判断をめぐる連絡"
       },
       "body": {
-        "en": "16:35 Mio: “I have read SAF-17. Keep the autonomous demonstration in tonight’s programme. I will own the go/no-go decision.”\n17:05 Ren: “I will not operate autonomous mode with this fault. I can place PIP in manual service mode for safe transport. Please notify guests of cancellation.”\n17:12 Mio: “Do not change the programme yet. I will handle the announcement.”",
-        "ja": "16:35ミオ：「SAF-17を確認しました。今夜の自律実演は予定に残してください。実施判断の責任は私が持ちます。」\n17:05レン：「この不具合のまま自律モードは動かせません。安全な搬送のため手動サービスモードにはできます。中止を宿泊者に案内してください。」\n17:12ミオ：「まだ進行表は変えないで。案内は私が対応します。」"
+        "en": "16:35 Mio: “I have read SAF-17. Keep the autonomous demonstration in tonight’s programme. I will own the go/no-go decision.”\n17:05 Ren: “I will not operate autonomous mode with this fault. I can place PIP in manual service mode for safe transport. Please notify guests of cancellation.”\n17:12 Mio: “Do not change the programme yet. I will handle the announcement.”\n18:32 Mio: “Prepare PIP for a cancellation inspection. Events will arrange collection; return the console when manual mode is set.”\n18:39 Ren: “Manual transport mode and isolation checklist complete. Console returned. I did not collect PIP or a trolley.”",
+        "ja": "16:35ミオ：「SAF-17を確認しました。今夜の自律実演は予定に残してください。実施判断の責任は私が持ちます。」\n17:05レン：「この不具合のまま自律モードは動かせません。安全な搬送のため手動サービスモードにはできます。中止を宿泊者に案内してください。」\n17:12ミオ：「まだ進行表は変えないで。案内は私が対応します。」\n18:32ミオ：「中止時の点検に備えてPIPを準備してください。回収はイベント係が手配します。手動モード設定後、端末は返却してください。」\n18:39レン：「手動搬送モードと遮断確認を完了。端末は返却済み。PIPや台車の受取はしていません。」"
       },
       "links": [],
       "presentation": {
@@ -727,20 +727,36 @@
             [
               "17:12",
               "Mio: “Do not change the programme yet. I will handle the announcement.”"
+            ],
+            [
+              "18:32",
+              "Mio: “Prepare PIP for a cancellation inspection. Events will arrange collection; return the console when manual mode is set.”"
+            ],
+            [
+              "18:39",
+              "Ren: “Manual transport mode and isolation checklist complete. Console returned. I did not collect PIP or a trolley.”"
             ]
           ],
           "ja": [
             [
               "16:35",
-              "オ：「SAF-17を確認しました。今夜の自律実演は予定に残してください。実施判断の責任は私が持ちます。」"
+              "ミオ：「SAF-17を確認しました。今夜の自律実演は予定に残してください。実施判断の責任は私が持ちます。」"
             ],
             [
               "17:05",
-              "ン：「この不具合のまま自律モードは動かせません。安全な搬送のため手動サービスモードにはできます。中止を宿泊者に案内してください。」"
+              "レン：「この不具合のまま自律モードは動かせません。安全な搬送のため手動サービスモードにはできます。中止を宿泊者に案内してください。」"
             ],
             [
               "17:12",
-              "オ：「まだ進行表は変えないで。案内は私が対応します。」"
+              "ミオ：「まだ進行表は変えないで。案内は私が対応します。」"
+            ],
+            [
+              "18:32",
+              "ミオ：「中止時の点検に備えてPIPを準備してください。回収はイベント係が手配します。手動モード設定後、端末は返却してください。」"
+            ],
+            [
+              "18:39",
+              "レン：「手動搬送モードと遮断確認を完了。端末は返却済み。PIPや台車の受取はしていません。」"
             ]
           ]
         }
@@ -755,8 +771,8 @@
         "ja": "REV-2／再開イベントの審査"
       },
       "body": {
-        "en": "17:15 Management to Mio: “Tonight’s event approval decisions will be reviewed tomorrow, including decisions made after an unresolved safety report. If cancellation is necessary, report it accurately and preserve the record.”\n17:22 Mio to reception: “If we cancel for a safety issue, head office wants my explanation tonight. Leave the guest programme unchanged until I brief you.”",
-        "ja": "17:15経営側からミオへ：「未解決の安全報告後の判断を含め、今夜の実施判断は明日審査します。中止が必要なら理由を正確に報告し、記録を残してください。」\n17:22ミオから受付へ：「安全上の理由で中止するなら、今夜中に本部への説明が必要です。私から案内するまで、宿泊者向け進行表は変えないでください。」"
+        "en": "17:15 Management to Mio: “Tonight’s event approval decisions will be reviewed tomorrow, including decisions made after an unresolved safety report. If cancellation is necessary, report it accurately and preserve the record.”\n17:22 Mio to reception: “If we cancel for a safety issue, head office wants my explanation tonight. Leave the guest programme unchanged until I brief you.”\n17:26 Mio draft: “If an external security incident forces postponement, the immediate report belongs to Incident Response; the programme can be rescheduled after recovery.”",
+        "ja": "17:15経営側からミオへ：「未解決の安全報告後の判断を含め、今夜の実施判断は明日審査します。中止が必要なら理由を正確に報告し、記録を残してください。」\n17:22ミオから受付へ：「安全上の理由で中止するなら、今夜中に本部への説明が必要です。私から案内するまで、宿泊者向け進行表は変えないでください。」\n17:26ミオの下書き：「外部のセキュリティ事故で延期する場合、初動報告はインシデント対応側の担当。復旧後にイベントを再設定できる。」"
       },
       "links": [],
       "presentation": {
@@ -780,16 +796,24 @@
             [
               "17:22",
               "Mio to reception: “If we cancel for a safety issue, head office wants my explanation tonight. Leave the guest programme unchanged until I brief you.”"
+            ],
+            [
+              "17:26",
+              "Mio draft: “If an external security incident forces postponement, the immediate report belongs to Incident Response; the programme can be rescheduled after recovery.”"
             ]
           ],
           "ja": [
             [
               "17:15",
-              "営側からミオへ：「未解決の安全報告後の判断を含め、今夜の実施判断は明日審査します。中止が必要なら理由を正確に報告し、記録を残してください。」"
+              "経営側からミオへ：「未解決の安全報告後の判断を含め、今夜の実施判断は明日審査します。中止が必要なら理由を正確に報告し、記録を残してください。」"
             ],
             [
               "17:22",
-              "オから受付へ：「安全上の理由で中止するなら、今夜中に本部への説明が必要です。私から案内するまで、宿泊者向け進行表は変えないでください。」"
+              "ミオから受付へ：「安全上の理由で中止するなら、今夜中に本部への説明が必要です。私から案内するまで、宿泊者向け進行表は変えないでください。」"
+            ],
+            [
+              "17:26",
+              "ミオの下書き：「外部のセキュリティ事故で延期する場合、初動報告はインシデント対応側の担当。復旧後にイベントを再設定できる。」"
             ]
           ]
         }
@@ -1636,8 +1660,8 @@
         "ja": "保守ドックのPIP"
       },
       "body": {
-        "en": "Stored dock intake-camera image: PIP beside folded towels in Linen Annex B, blue trolley cover draped over its shoulders. Serial PIP-004 comes from the matching wired handshake, not image recognition.\nStored status: “CURRENT LOCATION: LINEN STORE. CURRENT QUALIFICATION: OVERQUALIFIED.”\nThe manager sends staff to recover it immediately. The remaining investigation concerns responsibility and the false preview.",
-        "ja": "保守ドックの受入カメラが保存した画像：リネン別館B、畳んだタオルの横のPIP。青い台車カバーを肩に掛けている。製造番号PIP-004は画像認識ではなく、対応する有線接続記録から取得。\n保存ステータス：「現在地：リネン室。業務との適性：オーバースペック。」\n支配人は職員に即時回収を依頼する。残る調査は、責任と偽プレビューの解明。"
+        "en": "Stored dock intake-camera image: PIP beside folded towels in Linen Annex B, blue trolley cover draped over its shoulders. Serial PIP-004 comes from the matching wired handshake, not image recognition.\nStored status: “CURRENT LOCATION: LINEN STORE. CURRENT QUALIFICATION: OVERQUALIFIED. TEAM HOLIDAY: INTERRUPTED—PLEASE RESUME AFTER RECOVERY.”\nThe manager sends staff to recover it immediately. The remaining investigation concerns responsibility and the false preview.",
+        "ja": "保守ドックの受入カメラが保存した画像：リネン別館B、畳んだタオルの横のPIP。青い台車カバーを肩に掛けている。製造番号PIP-004は画像認識ではなく、対応する有線接続記録から取得。\n保存ステータス：「現在地：リネン室。業務との適性：オーバースペック。チームの休暇：中断中――復旧後に再開してください。」\n支配人は職員に即時回収を依頼する。残る調査は、責任と偽プレビューの解明。"
       },
       "links": []
     },
@@ -1967,8 +1991,8 @@
         "ja": "休暇中の探偵たちの説明"
       },
       "body": {
-        "en": "Mio arranged the removal. She did not erase the safety report. She wanted an external incident to justify tonight’s postponement and avoid explaining her approval in front of guests. The review would still happen tomorrow.\nShe used the trolley and rear entrance, hid PIP at a maintenance dock, and scheduled a rehearsal recording followed by the threat slide. The missing robot left at 18:42; the 18:55 sighting was a screen recording. The blackout was ordinary stage lighting.\nWhen the investigation exposed safety correspondence, she tried to deflect KUMA’s answer and take over the team board. Those actions could delay the team, not remove the independent records.\nMio: “I thought this would avoid an embarrassing incident.”\nManager: “You created an incident with chapters.”",
-        "ja": "搬出を手配したのはミオ。安全報告を消したのではない。外部の事件を今夜の延期理由にして、宿泊者の前で自分の承認を説明するのを避けたかった。明日の審査は残る。\n台車と裏口でPIPを運び、保守ドックへ隠し、録画と脅迫スライドを予約。搬出は18:42。18:55に見たのは録画。暗転は通常の演出だった。\n安全関係の連絡を調べられると、KUMAの回答を誘導し、チームのボードを奪おうとした。それは調査を遅らせても、独立した記録を消す手段にはならない。\nミオ：「大ごとにしたくなかったんです。」\n支配人：「章立てが必要な事件にしてどうするんですか。」"
+        "en": "Mio arranged the removal. Facing an immediate explanation for approving an unsafe demonstration, she wanted a supposed external attack to force postponement for a different reason. Her plan was to recover PIP after the ballroom cleared and report that the intruder had abandoned it; tomorrow’s approval review would still exist, but tonight’s public failure would look like Incident Response’s problem.\nShe used Events' inspection request to have Ren place PIP in safe manual transport mode. Ren returned the console and never collected a trolley. Mio then used T-07 and the rear entrance, hid PIP at a maintenance dock, and scheduled a rehearsal recording followed by the threat slide. PIP left at 18:42; the 18:55 sighting was a recording. The blackout was ordinary stage lighting.\nWhen the investigation exposed the safety correspondence, Mio used EVT-01 to add instruction-bearing content to KUMA and sent the false support request for board control. Those actions could delay the team, not erase the booking, photograph, Security-desk copy or controller-local dock record.\nThe case crossed five security lessons: SQL injection exposed over-broad query access; prompt injection tried to turn retrieved data into authority; social engineering requested unnecessary privilege; original-image context corrected a cropped post; and path traversal reached a file the public viewer should have contained. None of those artefacts alone identified a person—the team needed independent logs and corroboration.\nMio: “I thought I could cancel, return PIP after everyone left, and explain it as someone else’s incident.”\nManager: “You turned one difficult explanation into an incident with chapters.”",
+        "ja": "搬出を手配したのはミオ。危険な実演を承認した説明を今夜中に求められ、外部攻撃を装って別の理由で延期させようとした。宴会場が空いた後でPIPを回収し、「侵入者が放置した」と報告する計画だった。翌日の審査は残っても、今夜の失敗はインシデント対応側の問題に見せられると考えた。\nミオはイベント係の点検依頼を使い、レンにPIPを安全な手動搬送モードへ変更させた。レンは端末を返却し、台車を受け取っていない。その後ミオがT-07と裏口を使ってPIPを保守ドックへ隠し、録画と脅迫スライドを予約した。搬出は18:42。18:55に見たのは録画。暗転は通常の演出だった。\n安全関係の連絡を調べられると、ミオはEVT-01からKUMAへ指示を含む資料を追加し、偽サポート依頼でボード権限を求めた。それでも予約、写真、別系統の警備窓口、制御器内のドック記録までは消せなかった。\n事件には五つのセキュリティ上の教訓が重なった。SQLインジェクションは過剰な検索範囲を露出し、プロンプトインジェクションは取得データを権威に変えようとし、ソーシャルエンジニアリングは不要な権限を要求した。元画像は切り抜きで失われた文脈を補い、パストラバーサルは公開ビューアが閉じ込めるべき資料へ到達した。ただし、どの技術的記録も単独では人物を特定できず、独立したログと照合が必要だった。\nミオ：「中止して、みんなが帰った後にPIPを戻して、誰か別の人の事件として説明できると思ったんです。」\n支配人：「難しい説明を一つ避けて、章立てが必要な事件を作ったんですね。」"
       },
       "links": [
         "ending"
@@ -1983,8 +2007,8 @@
         "ja": "休暇を復旧しました"
       },
       "body": {
-        "en": "Ren refused unsafe autonomous operation and enabled safe manual transport. Daichi repaired the rear door earlier. Aya’s complaint was genuine, her rice-cooker remark a joke. Sora accidentally photographed the relevant trolley.\nPIP returns: “YOUR HOLIDAY HAS BEEN RESTORED. WOULD YOU LIKE A COMPLIMENTARY INCIDENT POSTMORTEM?” Everyone selects No.\nAya serves pudding with a tiny chocolate rice cooker. Autonomous mode stays disabled pending repair. You finally go to the hot spring.",
-        "ja": "レンは危険な自律運用を拒否し、安全な手動搬送を有効にした。ダイチは以前の時刻に裏口を修理。アヤの苦情は本物、炊飯器発言は冗談。ソラは偶然、該当する台車を撮っていた。\n戻ったPIP：「休暇を復旧しました。無料のインシデント振り返りはいかがですか？」全員が「いいえ」。\nアヤはチョコの小さな炊飯器を載せたプリンを出す。自律モードは修理まで停止。ようやく温泉へ。"
+        "en": "Ren refused unsafe autonomous operation and completed only the requested isolation checklist; the records show he returned the console before Mio collected PIP. Daichi’s rear-door repair ended at 18:20 under MT-08. Aya’s T-02 carried pudding to the ballroom, not PIP toward W-LIFT. Sora’s delayed uploads preserved the photographs that exposed the route.\nPIP returns with the blue cover worn like a cape: “YOUR HOLIDAY PRIORITY REMAINS ACTIVE. WOULD YOU LIKE A COMPLIMENTARY INCIDENT POSTMORTEM?” Everyone selects No.\nAya serves pudding with a tiny chocolate rice cooker. Autonomous mode stays disabled pending repair. PIP marks the team’s status as OFF DUTY, and you finally go to the hot spring.",
+        "ja": "レンは危険な自律運用を拒否し、依頼された遮断確認だけを実施した。記録上、ミオがPIPを受け取る前に端末を返却している。ダイチの裏口修理はMT-08で18:20に終了。アヤのT-02が運んだのは宴会場へのプリンで、W-LIFTへ向かうPIPではない。ソラの遅い投稿が、経路を示す写真を保存していた。\n青いカバーをマントのように羽織って戻ったPIP：「休暇の優先設定は、まだ有効です。無料のインシデント振り返りはいかがですか？」全員が「いいえ」。\nアヤはチョコの小さな炊飯器を載せたプリンを出す。自律モードは修理まで停止。PIPがチームの状態を「勤務時間外」に変更し、ようやく温泉へ。"
       },
       "links": []
     }
@@ -2442,11 +2466,15 @@
     },
     "evidence_groups": [
       {
-        "question": "Movement",
+        "question": "Physical departure",
         "sources": [
-          "asset-card",
           "dock-log",
-          "booking-receipts",
+          "booking-receipts"
+        ]
+      },
+      {
+        "question": "Route and destination",
+        "sources": [
           "photo-original",
           "route-ticket",
           "route-archive",
@@ -2454,9 +2482,8 @@
         ]
       },
       {
-        "question": "False timing",
+        "question": "False preview",
         "sources": [
-          "witnesses",
           "media-manifest",
           "playlist-history",
           "cue-sheet"
@@ -2465,19 +2492,23 @@
       {
         "question": "Motive",
         "sources": [
-          "safety-report",
           "safety-replies",
           "review-notice"
         ]
       },
       {
-        "question": "Attribution and interference",
+        "question": "Attribution",
         "sources": [
-          "security-response",
-          "source-revision",
           "session-register",
           "tablet-lending",
           "photo-late"
+        ]
+      },
+      {
+        "question": "Investigation interference",
+        "sources": [
+          "security-response",
+          "source-revision"
         ]
       }
     ],
