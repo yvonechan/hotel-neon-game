@@ -19,7 +19,7 @@ Your team arrives at a hotel for a well-earned holiday. Then PIP, the hotel's ro
 
 The investigation combines RPG-style conversations, private discoveries and interactive hotel systems. Players explore equipment records, chat with the KUMA concierge, inspect photographs, search service documents and compare maintenance and audiovisual logs.
 
-Five investigation chapters cover SQL injection, prompt injection, social engineering, digital forensics and path traversal. A final team deduction brings the evidence together. Hints are available throughout, and the ending includes an illustrated holiday celebration.
+Five investigation chapters cover SQL injection, prompt injection, social engineering, digital forensics and path traversal. A final team deduction brings the evidence together. Incorrect suspects, routes, explanations or motives trigger character counter-arguments with optional follow-up questions; the team can compare records and revise its answers. Hints are available throughout, and the ending includes an illustrated holiday celebration.
 
 The SQL exercise runs against a separate SQLite challenge database containing fictional records. The other security exercises are scripted simulations. KUMA does not use an external AI service or require an AI API key.
 
@@ -116,7 +116,7 @@ Hotel NEONは、エンジニアリングチーム向けのアニメ調・協力�
 
 RPG形式の会話、探索中に見つかる個別の手掛かり、操作できるホテルのシステムを組み合わせた捜査です。機材予約の調査、案内役KUMAとのチャット、写真の確認、保守文書の検索、設備・映像記録の照合などを行います。
 
-5つの調査チャプターで、SQLインジェクション、プロンプトインジェクション、ソーシャルエンジニアリング、デジタルフォレンジック、パストラバーサルを扱います。最後に、集めた証拠をもとにチームで最終推理を提出します。ヒントを利用でき、エンディングには休暇の再開を祝うイラストと会話が用意されています。
+5つの調査チャプターで、SQLインジェクション、プロンプトインジェクション、ソーシャルエンジニアリング、デジタルフォレンジック、パストラバーサルを扱います。最後に、集めた証拠をもとにチームで最終推理を提出します。人物、搬出経路、映像の説明、動機に誤りがあると、登場人物が反証を示します。追加の質問をし、資料を照合して回答を修正できます。ヒントを利用でき、エンディングには休暇の再開を祝うイラストと会話が用意されています。
 
 SQLの問題は、架空の記録を格納した専用のSQLiteデータベースで実行します。それ以外のセキュリティ問題は、ゲーム内の模擬システムです。KUMAは外部AIサービスを利用せず、AIのAPIキーも不要です。
 

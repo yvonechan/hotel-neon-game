@@ -2,7 +2,7 @@ import content from './content.json';
 import {localizeEvidence,type LocalizedPresentation} from '../shared/evidence';
 
 export type Lang='en'|'ja';
-export type Accusation={seq:number;culprit:string};
+export type Accusation={seq:number;culprit:string;issue?:'culprit'|'route'|'deception'|'motive';claim?:string};
 export type Member={id:string;name:string;token:string;cards:number[];notices?:number[]};
 export type PrivateDiscovery={trigger:string;card:number;member:string;seq:number};
 export type DialogueDecision={eligible:string[];votes:Record<string,number>;proposed?:number;override?:number;locked?:number};
@@ -199,12 +199,16 @@ export async function act(s:State,m:Member,a:Record<string,unknown>,services:Ser
   if(s.complete){result.record=record(s,'reveal');break;}
   requireThat(s.stage===6&&!s.complete,'stage');
   const v=(a.answers||{}) as Record<string,unknown>;const selected=Array.isArray(v.evidence)?v.evidence as string[]:[];
-  requireThat(['mio','ren','aya','daichi','sora'].includes(String(v.culprit)),'deduction');
-  if(v.culprit!=='mio'){
-   s.accusation={seq:(s.accusation?.seq||0)+1,culprit:String(v.culprit)};
-   result.message=s.language==='ja'?'指名された人物が反論しています。資料を照合して、推理を修正しましょう。':'The accused challenges your theory. Compare the records and revise your deduction.';break;
+  requireThat(typeof v.culprit==='string'&&['mio','ren','aya','daichi','sora'].includes(v.culprit),'deduction');
+  const alternatives={route:['rear','front','self'],deception:['recording','teleport','double'],motive:['deflect','erase_all','pudding']};
+  // Old clients may omit these fields when challenging a suspect. Present fields must still be valid.
+  for(const [field,values] of Object.entries(alternatives))if(v[field]!==undefined)requireThat(typeof v[field]==='string'&&values.includes(v[field] as string),'deduction');
+  const issue=v.culprit!=='mio'?'culprit':v.route!=='rear'?'route':v.deception!=='recording'?'deception':v.motive!=='deflect'?'motive':null;
+  if(issue){
+   requireThat(issue==='culprit'||v[issue]!==undefined,'deduction');
+   s.accusation={seq:(s.accusation?.seq||0)+1,culprit:String(v.culprit),issue,claim:String(v[issue])};
+   result.message=s.language==='ja'?'推理に反証が示されています。関係者に質問し、資料と照合して見直しましょう。':'The theory faces counter-evidence. Question the witnesses, compare the records and revise it.';break;
   }
-  requireThat(v.culprit==='mio'&&v.route==='rear'&&v.deception==='recording'&&v.motive==='deflect','deduction');
   for(const group of content.finale.evidence_groups)requireThat(group.sources.some(id=>selected.includes(id)&&s.read.includes(id)),'evidence_groups');
   s.complete=true;unlock(s,['reveal','ending']);result.record=record(s,'reveal');break;
  }
