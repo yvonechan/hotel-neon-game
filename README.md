@@ -1,163 +1,197 @@
-# Hotel NEON — anime mystery prototype v0.19
+# Hotel NEON
 
-A local multiplayer investigation for 1–7 players. Host is a player; one English/Japanese language per room; no countdown. The story targets about 90 minutes but has not been timed in a blind playtest. Not deployed.
+[English](#english) · [日本語](#日本語)
 
-## v0.19 clearer questions and visual evidence
+## English
 
-- Reception's repeatable honey-toast conversation opens KUMA's document tray for the room. Before discovery, ordinary source/ID requests retain its false account. This is a scripted story event, not an LLM security mechanism.
-- A simulated grep searches only fictional filenames/index keywords. The public tree no longer reveals the archive storage path, and players calculate a relative path from search results. The final optional hint can still supply the solution.
-- All revealed records are grouped on the map independently of the quest log. Private observations and undiscovered puzzle documents remain gated by their intended discovery rules.
-- Workspace settings now separate the handover code from its actual authority; recovery help has numbered steps and clearly states what remains accessible.
+### Purpose
 
-- Reviewed all clue formats; see `CLUE-DISPLAY-REVIEW.md` for the full audit.
-- Finale evidence is attached automatically through a six-question guided review. Players no longer classify a long checklist themselves.
-- Every task shows source links and concrete questions; the 18:42 cradle-removal event is explicit.
-- PIP's dock report now separates an illustrated camera snapshot, wired serial readings, stored status and the manager's recovery response.
-- Added a permanent hotel places/code reference. The dock inventory explicitly separates LA-B (building location), B-03 (dock point) and CT-44 (controller).
-- Policies, A/B/C instructions, settings and correspondence use labelled report sections; existing logs and manifests retain tables.
+Hotel NEON is an anime-style cooperative mystery game for engineering teams. It brings communication, evidence-based reasoning and light cybersecurity learning into a shared investigation.
 
-## v0.18 Casebook organization
+Your team arrives at a hotel for a well-earned holiday. Then PIP, the hotel's robot, disappears. Interview the staff, compare conflicting accounts and follow the digital trail to solve the case—and finally get back to the hot spring.
 
-The public service-document index is now a collapsible folder structure with the current folder marked, clickable public files and a read-only archive reference. Players still enter the relative archive path themselves; the directory map does not automatically open the restricted record.
+- **Players:** 1–7, including the Host. Solo play is supported.
+- **Language:** English or Japanese, selected by the Host for the whole room.
+- **Duration:** Designed for approximately 90 minutes; there is no countdown. Actual play time has not yet been measured in a blind playtest.
+- **Format:** Entirely online. No printed clues or physical materials are required.
 
-IMG_2860 now includes a cast-matched event-desk illustration with zoom/pan and an English/Japanese character key. The caption preserves the photograph's evidentiary limit: it identifies people and EVT-01, but does not reveal tablet screen contents.
+### Game content
 
-Support conversation attachments now show a localized badge and case screenshot, with a click-to-enlarge viewer and keyboard dismissal. Asking for proof resends the images. Kitchen, reception and maintenance calls have humorous localized dialogue; unlisted extensions receive a switchboard response. Only the trusted case-support extension verifies the request or unlocks evidence.
+The investigation combines RPG-style conversations, private discoveries and interactive hotel systems. Players explore equipment records, chat with the KUMA concierge, inspect photographs, search service documents and compare maintenance and audiovisual logs.
 
-Portrait and ticket correction: expression sprites use an inner clipping frame to exclude adjacent atlas artwork. EQ-1842 opens its own localized receipt and source text; the SQL search table continues to show all returned bookings for comparison.
+Five investigation chapters cover SQL injection, prompt injection, social engineering, digital forensics and path traversal. A final team deduction brings the evidence together. Hints are available throughout, and the ending includes an illustrated holiday celebration.
 
-Connection and journey validation: heartbeat checks detect silent sockets, expired or removed sessions clear Resume credentials, and HTTP requests time out instead of waiting indefinitely. The suite completes all chapters in English and Japanese for every party size from one to seven, rotating actors and testing both support-request outcomes. Socket heartbeat timing also runs against a controlled clock and the actual Worker.
+The SQL exercise runs against a separate SQLite challenge database containing fictional records. The other security exercises are scripted simulations. KUMA does not use an external AI service or require an AI API key.
 
-Delayed-request regression pass: repeated Start, private acknowledgement and completed recovery are safe to retry. Solved puzzle submissions remain safe after another player advances the chapter. The client ignores action responses and socket events from abandoned sessions and suppresses old-chapter record displays after synchronized progression.
+### Playing together
 
-Multiplayer regression pass: delayed prior-chapter advances no longer skip a newly completed chapter. Reconnecting eligible voters invalidate incomplete proposals; ballots survive replacement Hosts without an eligible vote. Late spectators receive an explanation instead of an enabled invalid vote button. Runtime tests exercise seven concurrent connected clients, pins, notes, votes, multi-tab Host presence and removal authorization.
+1. One player creates a room and shares the game URL and room code.
+2. Other players join using their own browser sessions and nicknames.
+3. Explore independently, discuss discoveries and pin useful records to the shared Evidence board. Private observations can be shared with the team.
+4. Important dialogue choices wait for eligible online players to vote. The Host confirms the majority proposal or chooses an override; solo votes resolve immediately.
+5. Submit deductions together and continue to the next chapter after each finding.
 
-- The Casebook opens on Current leads, showing only inspected records connected to the active chapter.
-- The complete Records archive is grouped into collapsible chapter sections, with the current chapter opened first.
-- The in-world Notebook also separates the current chapter, case briefing, earlier records, additional files and the resolution instead of showing one undifferentiated stack.
-- Each source has a short evidence summary plus NEW, READ and PINNED status. Story scenes, character profiles and witness dialogue no longer clutter the source-record archive.
-- Replay is now a clearly named section. On small screens, the five Casebook tabs scroll horizontally instead of compressing into unreadable labels.
-- The Evidence board remains the team's curated shortlist, while the Casebook remains the complete inspected-source archive.
+Room progress, shared records, pins, notes and dialogue decisions synchronize over WebSockets. Browsing and dialogue reading pace remain individual. Conversation replay does not reset the room's progress.
 
-## v0.17 story and security revision
+### Run locally
 
-- Mio now has a complete intended endgame: stage an external incident, postpone the unsafe show, recover PIP after the ballroom clears and shift the immediate explanation to Incident Response. Independent records make that plan fail.
-- Ren's manual-mode work, console return and lack of trolley collection are explicit. Aya, Daichi and Sora each have a plausible suspicion that later evidence can eliminate.
-- PIP's stored status and return call back to the team's holiday priority. The final explanation maps all five security themes to the incident without claiming that a technical artefact alone identifies a person.
-- The finale now requires separate support for physical departure, route, false preview, motive, attribution and investigation interference. One-option room votes were removed from the final explanation.
-- Sending the fictional handover code remains a recoverable social-engineering consequence, but the confirmation now clearly warns that one player's action changes board access for the whole room.
-
-## v0.16 room retention and witness follow-ups
-
-- Pressing a witness statement now shows the team's specific follow-up question and the witness's answer. Presenting evidence also produces an explicit question-and-response exchange.
-- Completed rooms expire 24 hours after their last activity. Unfinished rooms expire after seven inactive days.
-- Connected rooms are never removed by the expiry alarm. Cleanup removes the saved room, member tokens and its separate SQL-lab usage budget.
-- Pinning is idempotent across players and already-pinned records are labelled instead of offering a duplicate action. Private-clue sharing now survives note trimming and only dismisses the reveal after the share succeeds.
-
-## v0.15 room-wide dialogue decisions
-
-- Important dialogue choices wait for every eligible online player and show exactly who has not voted.
-- After all votes arrive, the Host confirms the majority choice or transparently overrides it; ties use the Host's vote as the proposal.
-- The locked response is shared across the room. Dialogue replay is read-only and follows the choice the room already locked.
-- Disconnected voters leave the active quorum, while players who join after a ballot starts do not reopen it. Solo votes lock immediately.
-
-## v0.13 multiplayer reliability
-
-- Player names are unique after Unicode/case normalization, keeping votes and notes attributable.
-- Puzzle submission, chapter advance and finale actions tolerate another screen completing the same action first.
-- Shared private observations are visibly marked and cannot be shared repeatedly. When a player leaves, only their unshared transferred observations trigger a private reveal for the host.
-- Removing a player requires confirmation. Teammate discovery notices now stay visible above story and system overlays.
-
-## v0.12 progressive private discoveries
-
-- Private observations now appear during exploration instead of being dealt in the lobby. Seven story-linked triggers cover the hot-spring entrance, witness lounge, work-order desk, KUMA archive, case-board settings, photo library and ballroom controls.
-- The server chooses among online players with the fewest observations, using randomness only to break a tie. Late joiners are therefore prioritized by later discoveries.
-- The chosen player receives a private RPG reveal with Keep and Share actions. Other screens only announce that the player noticed something; the secret text is never included in their snapshot.
-- Discovered observations remain in Team. Removed players' observations transfer to the host, and all observations remain optional context rather than hard progression gates.
-
-## v0.11 interactive conversations
-
-- Important RPG choices now show synchronized room votes while each player keeps control of their own dialogue pace. Votes are suggestions and never block progress.
-- Witness interviews offer Hear statement, Press the wording and Present evidence actions. Relevant private clue holders receive an optional Raise clue prompt that shares into team notes.
-- Incorrect evidence produces a recoverable response; matching evidence clarifies the exact scope of a statement without changing puzzle facts.
-- All nine human characters have neutral, happy, surprised and worried/defensive transparent portraits. Expressions react to the current speaker, scene and response. PIP and KUMA keep their existing animated faces.
-
-
-## v0.10 investigation navigation
-
-- Four stable destinations now organize the game: Explore, Casebook, Evidence and Team. KUMA remains a separate chat companion.
-- The Casebook separates story, people, inspected records and the investigation timeline.
-- Pinned records and shared notes now live together on one Evidence board. Private clue cards are surfaced inside Team.
-- Hotel scene hotspots change by chapter and open the relevant in-world terminal, phone or archive. The current quest owns the single main action and the hint button.
-
-
-## Start locally
-
-Install Node.js 24, then run inside this folder:
+Prerequisites: **Node.js 24** and **npm**.
 
 ```sh
+git clone https://github.com/yvonechan/hotel-neon-game.git
+cd hotel-neon-game
 npm ci
 npm run dev
 ```
 
-`dev` builds the frontend automatically before starting Wrangler, so `dist` does not have to exist beforehand. Open the local URL Wrangler prints, normally http://localhost:8787. Create a room or share its URL and room code. Two tabs in the same browser profile resume the same seat; use a private window or separate browser profile for a second player. Other devices need the same server's LAN address; their localhost is a different computer.
+Open the URL printed by Wrangler, normally `http://localhost:8787`. The development command builds the frontend before starting the local Cloudflare Worker. After editing frontend source, restart `npm run dev` to rebuild it.
 
-The SQL challenge is now built into Cloudflare's local runtime as a separate SQLite-backed Durable Object. No Docker, PostgreSQL, external SQL gateway or SQL credentials are required. `npm run dev` automatically builds `dist` before starting Wrangler.
+No Cloudflare login, Docker container, external database or API key is needed for local play. Wrangler runs the room storage and the separate SQL challenge locally.
 
-No Cloudflare account is needed locally. For public hosting, use your own Cloudflare Workers account; the project targets Workers Free with SQLite-backed Durable Objects and static assets. Usage quotas still apply. The supplied `wrangler.jsonc` binds two distinct namespaces: `ROOMS` for game state and `SQL_LABS` for fictional query data. Migration v1 is preserved; v2 adds SqlLab without deleting game data. Nothing has been deployed by this update.
+To test multiple players on one computer, use a normal window and an incognito window, separate browser profiles, or different browsers. Tabs in the same browser profile share the saved player session and resume the same seat.
 
-### Updating from v0.8
-
-Replace the source, root package files and Wrangler config with v0.15, then run `npm ci` and `npm run dev`. Keep your existing `.wrangler` directory if you want to retain local room progress. The old `sql-challenge` folder and setup script are obsolete and no longer included. Existing `SQL_CHALLENGE_URL`/`SQL_CHALLENGE_TOKEN` entries in `.dev.vars` are ignored by this version and may be removed. Do not copy secrets into this ZIP.
-
-If the old Docker lab is still running, stop the two Hotel NEON lab containers in Docker Desktop. You do not need those containers for the new game. You can also run the following while the old Compose file is still present:
-
-```sh
-docker compose --env-file sql-challenge/.env -f sql-challenge/compose.yaml down
-```
-
-
-## Play and communication
-
-- Create/join by room code, with one shared language, saved progress, WebSocket synchronization, reconnect and host handoff. Host can remove seats; removed optional clues transfer to the host.
-- Private observations appear on selected players’ screens as the team explores. Open **Team** in the bottom menu, compare observations aloud or choose **Share with team** to add them to shared notes. Solo players discover the same observations progressively. Shared discoveries, records and pins sync; browsing remains independent.
-- Follow the next-action quest, inspect records, use Team deduction, then explicitly choose Next chapter after a finding. Chapter flags are mementos, not another input hurdle.
-- Help is replayable through How to play. The story, witness accounts and final explanation use RPG dialogue and can be revisited through Casebook. KUMA is a scripted chat companion with no paid AI dependency.
-- Useful records go into the shared Evidence board. Hints are directly accessible. Giving the fake caller the fictional board code triggers one recoverable team board lock; evidence and progress are preserved.
-
-## Visual and play features
-
-The hotel now has distinct equipment, file explorer, maintenance, AV, archive and photo-library application windows. Eighteen evidence records use tables, report sections or asset fields, with full original text retained. Unknown values stay unknown; evidence caveats remain visible.
-
-Characters use transparent portrait cutouts and a separate layout row from controls and dialogue. The prologue hints at older digital systems' security weaknesses without revealing answers.
-
-Click a posted or retained-original photo to open a local zoom/pan viewer. Enlargement makes no puzzle request. Reading Image details is an explicit prerequisite for the separate Inspect original action; the quest directs you through it instead of issuing an invalid request. The posted view stays cropped and does not reveal the original's placard. Keyboard: Escape closes; +/− zoom; 0 resets; with Close focused, arrow keys pan.
-
-SQL injection executes real SQL against a separate SQLite challenge Durable Object with only fictional equipment records. The application's room database remains isolated. See `SQL-CHALLENGE.md` for the supported grammar and containment boundaries. Other exercises (prompt injection, social engineering, metadata and virtual path traversal) remain scripted/simulated and never touch real hotel systems, host files or outside services.
-
-## Validation and limits
+### Build and test
 
 ```sh
 npm run build
 npm test
 ```
 
-See `test-report.json` and `sqlite-test-report.json` for counts and exact scope. Tests use real local Cloudflare workerd SQLite, including the production Worker-to-SqlLab call, not a mock query evaluator. Coverage includes alternative predicates, subqueries, UNION, quote/comment handling, write/system-table/function rejection, output bounds, persistent rate limiting, room separation and the full game flow, storage, WebSockets and host handoff. `wrangler deploy --dry-run` packages both namespaces; it does not publish them.
+- `npm run build` checks TypeScript and builds the frontend into `dist/`.
+- `npm test` runs the automated suite, including local Cloudflare workerd/SQLite, full English/Japanese game journeys for 1–7 players, shared evidence, room lifecycle, votes, reconnects, concurrent WebSocket clients and SQL challenge containment.
+- Test results are written to `test-report.json` and `sqlite-test-report.json`.
 
-An independent source reviewer inspected SQL containment. This is not a production security audit. No measured play duration, current full-browser/mobile QA, public deployment or deployed free-tier usage measurement is claimed. Before the team event, run a browser walkthrough with two profiles and a small-group playtest. Before broad public use, validate abuse controls and idle-room cleanup against actual account quotas.
+The automated suite does not replace browser or mobile visual testing. Before an event, check the deployed game with separate player sessions and run a small-group playthrough.
 
-## Artwork and source
+### Deploy to Cloudflare Workers
 
-`public/art` contains the lobby, corridor evidence, scene atlas, holiday tour, cast and transparent portrait atlas. `ART-DIRECTION.md` documents continuity. Exact evidence labels are rendered as accessible UI text. Source, tests, configuration and the dependency lockfile are included; generated build output, installed dependencies and local secrets are excluded.
+The repository includes the static-asset and Durable Object configuration in `wrangler.jsonc`.
 
-## v0.8 layout correction
+For deployment from your computer:
 
-Conversation overlays use one explicit `minmax(0,1fr)` grid column with stretched alignment. An old flex-layout `justify-content:flex-end` rule was removed; it had carried into the newer grid layout and allowed long dialogue to size the column beyond the viewport. Navigation, character and dialogue now share the same bounded column. Current correction has passed the production build; full browser verification remains pending.
+```sh
+npx wrangler login
+npm run deploy
+```
 
-### v0.20 — deduction feedback and holiday finale
+For automatic deployment from GitHub, connect this repository through **Cloudflare Dashboard → Workers & Pages → Create application → GitHub** and use:
 
-Failed actions now show a persistent, dismissible flash above game overlays. Incorrect final suspects trigger a room-wide counter-argument event: each player reads at their own pace, existing answers and evidence remain intact, and a teammate can submit a revised theory. Correct suspects with an unsupported explanation still receive deduction feedback. A new illustrated hot-spring dinner CG accompanies the bilingual epilogue celebration and the completed case retains a team-name celebration panel with replay access.
+| Setting | Value |
+| --- | --- |
+| Worker name | `hotel-neon` |
+| Production branch | `main` |
+| Root directory | Repository root |
+| Build command | `npm run build` |
+| Deploy command | `npx wrangler deploy` |
+| Build environment variable | `NODE_VERSION=24` |
 
-### v0.20.1 — multiplayer feedback fixes
+A Cloudflare account is required for public deployment. The Worker name must match `wrangler.jsonc`. Wrangler creates the configured SQLite-backed Durable Object namespaces for room state and the SQL challenge through the included migrations. Use the public URL returned by Cloudflare to invite players.
 
-Outdated deduction responses no longer interrupt a teammate’s chapter clear or completed case. Shared progress clears obsolete error/accusation messages. Escape dismisses an error flash without closing the scene beneath it.
+### Project reference
+
+| Path | Contents |
+| --- | --- |
+| `src/client/` | Game interface, dialogue, exploration and evidence displays |
+| `src/server/` | Game rules, bilingual content, rooms and isolated SQL challenge |
+| `src/shared/` | Shared evidence presentation types and helpers |
+| `public/art/` | Character, location, evidence and ending artwork |
+| `tests/` | Automated engine, multiplayer and SQL checks |
+| `SQL-CHALLENGE.md` | SQL exercise behavior and containment boundaries |
+| `ART-DIRECTION.md` | Artwork guidance and continuity |
+
+## 日本語
+
+### 目的
+
+Hotel NEONは、エンジニアリングチーム向けのアニメ調・協力型ミステリーゲームです。仲間との情報共有、証拠に基づく推理、身近なサイバーセキュリティの学びを、一つの事件の捜査を通して楽しめます。
+
+休暇を楽しむためにホテルへ到着したチーム。しかし、ホテルのロボット「PIP」が姿を消してしまいます。スタッフへの聞き込み、食い違う証言の照合、デジタル記録の調査を通じて事件を解決し、今度こそ温泉でくつろぎましょう。
+
+- **人数：** Hostを含む1〜7人。ソロプレイにも対応しています。
+- **言語：** 英語または日本語。Hostがルーム全体の言語を選びます。
+- **所要時間：** 約90分を想定しています。時間制限はありません。初見プレイヤーによる所要時間の実測は未実施です。
+- **形式：** すべてオンラインで完結します。印刷物や実物の手掛かりは不要です。
+
+### ゲーム内容
+
+RPG形式の会話、探索中に見つかる個別の手掛かり、操作できるホテルのシステムを組み合わせた捜査です。機材予約の調査、案内役KUMAとのチャット、写真の確認、保守文書の検索、設備・映像記録の照合などを行います。
+
+5つの調査チャプターで、SQLインジェクション、プロンプトインジェクション、ソーシャルエンジニアリング、デジタルフォレンジック、パストラバーサルを扱います。最後に、集めた証拠をもとにチームで最終推理を提出します。ヒントを利用でき、エンディングには休暇の再開を祝うイラストと会話が用意されています。
+
+SQLの問題は、架空の記録を格納した専用のSQLiteデータベースで実行します。それ以外のセキュリティ問題は、ゲーム内の模擬システムです。KUMAは外部AIサービスを利用せず、AIのAPIキーも不要です。
+
+### 仲間と遊ぶ
+
+1. 一人がルームを作成し、ゲームのURLとルームコードを共有します。
+2. 他のプレイヤーは、それぞれのブラウザーセッションとニックネームで参加します。
+3. 手分けして探索し、発見した内容を話し合い、重要な資料を共有の証拠ボードにピン留めします。個別の観察もチームへ共有できます。
+4. 重要な会話の選択肢では、投票対象のオンラインプレイヤー全員が投票します。Hostが多数決の案を確定するか、別の選択肢を指定します。ソロの場合は即座に確定します。
+5. チームで推理を提出し、各チャプターの調査結果を確認してから次へ進みます。
+
+進捗、共有資料、ピン、メモ、会話の決定はWebSocketで同期します。資料を開く操作や会話を読むペースはプレイヤーごとに独立しています。会話を再生しても、ルームの進捗はリセットされません。
+
+### ローカルで起動する
+
+必要なもの：**Node.js 24**、**npm**。
+
+```sh
+git clone https://github.com/yvonechan/hotel-neon-game.git
+cd hotel-neon-game
+npm ci
+npm run dev
+```
+
+Wranglerが表示するURL（通常は `http://localhost:8787`）を開きます。開発用コマンドは、フロントエンドをビルドしてからローカルのCloudflare Workerを起動します。フロントエンドのソースを変更した場合は、`npm run dev` を再起動してビルドし直してください。
+
+ローカル起動にCloudflareへのログイン、Docker、外部データベース、APIキーは不要です。ルームの保存先とSQL問題の専用環境も、Wranglerがローカルで動かします。
+
+一台のPCで複数人の動作を確認する場合は、通常ウィンドウとシークレットウィンドウ、別のブラウザープロファイル、または別のブラウザーを使用してください。同じプロファイルのタブは保存済みのプレイヤーセッションを共有し、同じ参加枠に戻ります。
+
+### ビルドとテスト
+
+```sh
+npm run build
+npm test
+```
+
+- `npm run build`：TypeScriptの検査とフロントエンドのビルドを行い、`dist/` に出力します。
+- `npm test`：ローカルのCloudflare workerd／SQLiteを使用して自動テストを実行します。英語・日本語それぞれの1〜7人での全チャプター進行、証拠共有、ルームのライフサイクル、投票、再接続、複数WebSocketクライアントの同時操作、SQL問題の実行範囲などを検証します。
+- テスト結果は `test-report.json` と `sqlite-test-report.json` に出力されます。
+
+自動テストは、ブラウザーやモバイル端末での表示確認を代替するものではありません。イベント前には、公開環境で別々のプレイヤーセッションから操作を確認し、少人数で通しプレイを行ってください。
+
+### Cloudflare Workersへデプロイする
+
+静的ファイルとDurable Objectsの設定は、`wrangler.jsonc` に含まれています。
+
+手元のPCからデプロイする場合：
+
+```sh
+npx wrangler login
+npm run deploy
+```
+
+GitHubから自動デプロイする場合は、**Cloudflare Dashboard → Workers & Pages → Create application → GitHub** からこのリポジトリを接続し、次の値を設定します。
+
+| 設定 | 値 |
+| --- | --- |
+| Worker名 | `hotel-neon` |
+| 本番ブランチ | `main` |
+| ルートディレクトリ | リポジトリのルート |
+| ビルドコマンド | `npm run build` |
+| デプロイコマンド | `npx wrangler deploy` |
+| ビルド環境変数 | `NODE_VERSION=24` |
+
+公開にはCloudflareアカウントが必要です。Worker名は `wrangler.jsonc` と一致させてください。ルーム状態とSQL問題に使用するSQLiteベースのDurable Object名前空間は、同梱のマイグレーションに従ってWranglerが作成します。デプロイ後は、Cloudflareが発行した公開URLを参加者に共有します。
+
+### プロジェクト構成
+
+| パス | 内容 |
+| --- | --- |
+| `src/client/` | ゲーム画面、会話、探索、証拠の表示 |
+| `src/server/` | ゲームルール、英日コンテンツ、ルーム管理、独立したSQL問題環境 |
+| `src/shared/` | 証拠表示の共通型とヘルパー |
+| `public/art/` | キャラクター、背景、証拠、エンディングの画像 |
+| `tests/` | ゲーム進行、マルチプレイ、SQLの自動テスト |
+| `SQL-CHALLENGE.md` | SQL問題の動作と実行範囲 |
+| `ART-DIRECTION.md` | アートの方針と一貫性 |
